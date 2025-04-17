@@ -1,6 +1,7 @@
+use core::num::NonZeroU64;
+
 use anyhow::Context;
 use futures::StreamExt;
-use tendermint::block::Height;
 use tendermint_rpc::{SubscriptionClient, WebSocketClient, event::EventData, query::EventType};
 use tokio::sync::oneshot;
 
@@ -9,10 +10,10 @@ use crate::{
 	persistence::{DbPool, store},
 };
 
-#[tracing::instrument(level = "info", skip_all)]
+#[tracing::instrument(skip_all)]
 pub async fn start<S>(pool: DbPool, client: WebSocketClient, tx: S) -> anyhow::Result<()>
 where
-	S: Into<Option<oneshot::Sender<Height>>>,
+	S: Into<Option<oneshot::Sender<NonZeroU64>>>,
 {
 	let mut subscription = client.subscribe(EventType::NewBlock.into()).await?;
 
@@ -29,10 +30,12 @@ where
 		}
 	};
 
-	tracing::info!("received first live block {}", first_block.header.height);
-
+	let first_live_block_height = first_block.header.height;
+	tracing::info!("received first live block {}", first_live_block_height);
 	if let Some(tx) = tx.into() {
-		if let Err(height) = tx.send(first_block.header.height) {
+		let height =
+			first_live_block_height.value().try_into().context("height must be positive")?;
+		if let Err(height) = tx.send(height) {
 			tracing::error!("no receiver to accept first live block height {}", height);
 		}
 	}
@@ -55,6 +58,7 @@ where
 		} = event.data
 		{
 			tracing::info!("received live block {}", block.header.height);
+
 			let block = Block::builder()
 				.header(super::make_header(block.header)?)
 				.hash(super::make_sha256(block_id.hash).context("missing block hash")?)

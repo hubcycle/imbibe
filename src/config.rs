@@ -1,9 +1,11 @@
+use core::num::NonZeroUsize;
+
+use std::path::PathBuf;
+
 use anyhow::Context;
 use secrecy::SecretString;
 use serde::Deserialize;
 use url::Url;
-
-const CONFIG_ENV_PREFIX: &str = "IMBIBE";
 
 #[derive(Deserialize)]
 pub struct Config {
@@ -16,14 +18,13 @@ pub struct Config {
 #[derive(Deserialize)]
 pub struct DbConfig {
 	pub db_url: SecretString,
-	pub max_conn: usize,
+	pub max_conn: NonZeroUsize,
 }
 
 #[derive(Deserialize)]
 pub struct AppConfig {
 	pub name: String,
-	pub workers: u16,
-	pub batch: u16,
+	pub batch: NonZeroUsize,
 }
 
 #[derive(Deserialize)]
@@ -38,18 +39,24 @@ pub struct TelemetryConfig {
 }
 
 pub fn get_configuration() -> anyhow::Result<Config> {
-	let base_path = std::env::current_dir()?;
-
-	let config_dir = base_path.join("config");
-
 	config::Config::builder()
-		.add_source(config::File::from(config_dir.join("config.ron")))
+		.add_source(config::File::from(Config::base_config_ron()?))
 		.add_source(
-			config::Environment::with_prefix(CONFIG_ENV_PREFIX)
+			config::Environment::with_prefix(Config::CONFIG_ENV_PREFIX)
 				.prefix_separator("_")
 				.separator("__"),
 		)
 		.build()?
 		.try_deserialize()
 		.context("failed to deserialize config")
+}
+
+impl Config {
+	const CONFIG_ENV_PREFIX: &str = "IMBIBE";
+
+	const DEFAULT_RON: &str = "config/config.ron";
+
+	fn base_config_ron() -> anyhow::Result<PathBuf> {
+		Ok(std::env::current_dir()?.join(Self::DEFAULT_RON))
+	}
 }

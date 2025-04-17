@@ -31,11 +31,25 @@ async fn main() -> anyhow::Result<()> {
 
 	let (tx, rx) = oneshot::channel();
 
-	let live_indexer_handle = tokio::spawn(indexer::live::start(pool, client, tx));
+	let live_indexer_handle = tokio::spawn(indexer::live::start(pool.clone(), client.clone(), tx));
 
 	if let Ok(height) = rx.await {
 		tracing::info!("first live block height received: {}", height);
-		// TODO: backfill missing blocks
+
+		if height.get() > 1 {
+			tokio::spawn(indexer::historical::backfill(
+				client,
+				pool,
+				height,
+				config.app.batch,
+				config.db.max_conn,
+			))
+			.await??;
+
+			tracing::info!("backfilling finished");
+		} else {
+			tracing::info!("backfilling skipped as live subscriber started with block 1");
+		}
 	}
 
 	live_indexer_handle.await??;
