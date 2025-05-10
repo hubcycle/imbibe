@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package elder.feetoken;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "elder/feetoken/params.proto";
+
+option go_package = "github.com/0xElder/elder/x/feetoken/types";
+
+// Query defines the gRPC querier service.
+service Query {
+
+  // Params queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {}
+
+  // AllowedNonNativeFeeDenoms queries the allowed non-native fee denoms.
+  rpc AllowedNonNativeFeeDenoms(QueryAllowedNonNativeFeeDenomsRequest)
+    returns (QueryAllowedNonNativeFeeDenomsResponse) {}
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+
+  // params holds all the parameters of this module.
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// QueryAllowedNonNativeFeeDenomsRequest is request type for the
+// Query/AllowedNonNativeFeeDenoms RPC method.
+message QueryAllowedNonNativeFeeDenomsRequest {}
+
+// QueryAllowedNonNativeFeeDenomsResponse is request type for the
+// Query/AllowedNonNativeFeeDenoms RPC method.
+message QueryAllowedNonNativeFeeDenomsResponse {
+
+  // allowed_non_native_fee_denoms holds all the allowed non-native fee denoms.
+  repeated string allowed_non_native_fee_denoms = 1;
+}

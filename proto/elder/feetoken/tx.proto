@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package elder.feetoken;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "elder/feetoken/params.proto";
+
+option go_package = "github.com/0xElder/elder/x/feetoken/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines a (governance) operation for updating the module
+  // parameters. The authority defaults to the x/gov module account.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  // AddToAllowedNonNativeFeeDenoms defines a (governance) operation for adding
+  // a non native denom.
+  rpc AddToAllowedNonNativeFeeDenoms(MsgAddToAllowedNonNativeFeeDenoms)
+      returns (MsgAddToAllowedNonNativeFeeDenomsResponse);
+
+  // RemoveFromAllowedNonNativeFeeDenoms defines a (governance) operation for
+  // removing a non native denom.
+  rpc RemoveFromAllowedNonNativeFeeDenoms(
+      MsgRemoveFromAllowedNonNativeFeeDenoms)
+      returns (MsgRemoveFromAllowedNonNativeFeeDenomsResponse);
+}
+
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "elder/x/feetoken/MsgUpdateParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // params defines the module parameters to update.
+  // NOTE: All parameters must be supplied.
+  Params params = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+// MsgAddToAllowedNonNativeFeeDenoms defines the request type to add a non
+// native denom.
+message MsgAddToAllowedNonNativeFeeDenoms {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "elder/x/feetoken/MsgAddToAllowedNonNativeFeeDenoms";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // denom is the non native denom to be added to the set of allowed non native
+  // fee denoms.
+  string denom = 2;
+}
+
+// MsgAddToAllowedNonNativeFeeDenomsResponse defines the respone type for
+// executing a MsgAddToAllowedNonNativeFeeDenoms message.
+message MsgAddToAllowedNonNativeFeeDenomsResponse {}
+
+// MsgRemoveFromAllowedNonNativeFeeDenoms defines the request type
+message MsgRemoveFromAllowedNonNativeFeeDenoms {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "elder/x/feetoken/RemoveFromAllowedNonNativeFeeDenoms";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // denom is the non native denom to be removed from the set of allowed non
+  // native fee denoms.
+  string denom = 2;
+}
+
+message MsgRemoveFromAllowedNonNativeFeeDenomsResponse {}

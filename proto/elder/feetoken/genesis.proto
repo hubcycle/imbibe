@@ -1,0 +1,18 @@
+syntax = "proto3";
+package elder.feetoken;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "elder/feetoken/params.proto";
+
+option go_package = "github.com/0xElder/elder/x/feetoken/types";
+
+// GenesisState defines the feetoken's module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  // allowed_non_native_fee_denoms holds all the allowed non-native fee denoms.
+  repeated string allowed_non_native_fee_denoms = 2;
+}
