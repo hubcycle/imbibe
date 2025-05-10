@@ -1,0 +1,49 @@
+syntax = "proto3";
+package elder.registration;
+
+import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/0xElder/elder/x/registration/types";
+
+message Stack {
+  option (amino.name) = "elder/x/registration/Stack";
+  option (gogoproto.equal) = true;
+
+  uint64 stack_number = 1;
+  string stack_type = 2;
+}
+
+message DataLayer {
+  option (amino.name) = "elder/x/registration/DataLayer";
+  option (gogoproto.equal) = true;
+
+  uint64 data_layer_number = 1;
+  string data_layer_type = 2;
+}
+
+message Roll {
+  option (gogoproto.equal) = true;
+
+  uint64 id = 1;
+  string name = 2;
+  string owner = 3;
+  string executor = 4;
+  uint64 max_txs = 5;
+  Stack stack = 6
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  DataLayer data_layer = 7
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  cosmos.base.v1beta1.Coin stake = 8
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  uint64 roll_start_block = 9;
+  uint64 roll_end_block = 10;
+  uint64 start_block = 11;
+  uint64 end_block = 12;
+  uint64 last_updated_block = 13;
+  string previous_executor = 14;
+  bool enabled = 15;
+}
+
+message RollIDs { repeated uint64 ids = 1; }

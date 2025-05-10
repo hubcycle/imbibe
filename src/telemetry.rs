@@ -23,6 +23,7 @@ where
 		.cloned()
 }
 
+#[bon::builder]
 pub fn make_subscriber<N>(
 	name: N,
 	exporter_endpoint: Url,

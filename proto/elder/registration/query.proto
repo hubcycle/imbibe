@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package elder.registration;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "elder/registration/params.proto";
+import "elder/registration/roll.proto";
+
+option go_package = "github.com/0xElder/elder/x/registration/types";
+
+// Query defines the gRPC querier service.
+service Query {
+
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/0xElder/elder/registration/params";
+  }
+
+  // Query roll by id.
+  rpc Roll(QueryRollRequest) returns (QueryRollResponse) {
+    option (google.api.http).get = "/0xElder/elder/registration/roll/{id}";
+  }
+
+  // Query all rolls.
+  rpc Rolls(QueryRollsRequest) returns (QueryRollsResponse) {
+    option (google.api.http).get = "/0xElder/elder/registration/rolls";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+message QueryRollRequest { uint64 id = 1; }
+
+message QueryRollResponse { Roll roll = 1; }
+
+message QueryRollsRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryRollsResponse {
+  repeated Roll rolls = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

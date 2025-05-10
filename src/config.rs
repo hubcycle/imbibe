@@ -9,22 +9,28 @@ use url::Url;
 
 #[derive(Deserialize)]
 pub struct Config {
-	pub db: DbConfig,
 	pub app: AppConfig,
+	pub chain: ChainConfig,
+	pub db: DbConfig,
 	pub tm: TmRpcConfig,
 	pub telemetry: TelemetryConfig,
-}
-
-#[derive(Deserialize)]
-pub struct DbConfig {
-	pub db_url: SecretString,
-	pub max_conn: NonZeroUsize,
 }
 
 #[derive(Deserialize)]
 pub struct AppConfig {
 	pub name: String,
 	pub batch: NonZeroUsize,
+}
+
+#[derive(Deserialize)]
+pub struct ChainConfig {
+	pub hrp: String,
+}
+
+#[derive(Deserialize)]
+pub struct DbConfig {
+	pub db_url: SecretString,
+	pub max_conn: NonZeroUsize,
 }
 
 #[derive(Deserialize)]

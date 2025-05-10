@@ -1,0 +1,139 @@
+syntax = "proto3";
+
+package elder.registration;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+import "elder/registration/params.proto";
+
+option go_package = "github.com/0xElder/elder/x/registration/types";
+
+// Msg defines the Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams defines a (governance) operation for updating the module
+  // parameters. The authority defaults to the x/gov module account.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+
+  rpc Register(MsgRegister) returns (MsgRegisterResponse);
+  rpc ModifyExecutor(MsgModifyExecutor) returns (MsgModifyExecutorResponse);
+  rpc ModifyOwner(MsgModifyOwner) returns (MsgModifyOwnerResponse);
+  rpc ModifyMaxTxs(MsgModifyMaxTxs) returns (MsgModifyMaxTxsResponse);
+  rpc Deregister(MsgDeregister) returns (MsgDeregisterResponse);
+  rpc EnableRoll(MsgEnableRoll) returns (MsgEnableRollResponse);
+  rpc AddStack(MsgAddStack) returns (MsgAddStackResponse);
+  rpc AddDa(MsgAddDa) returns (MsgAddDaResponse);
+}
+// MsgUpdateParams is the Msg/UpdateParams request type.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "elder/x/registration/MsgUpdateParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // params defines the module parameters to update.
+
+  // NOTE: All parameters must be supplied.
+  Params params = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+message MsgRegister {
+  option (cosmos.msg.v1.signer) = "owner";
+  string owner = 1;
+  string executor = 2;
+  string name = 3;
+  uint64 max_txs = 4;
+  uint64 stack = 5;
+  uint64 data_layer = 6;
+  cosmos.base.v1beta1.Coin stake = 7
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+message MsgRegisterResponse { uint64 id = 1; }
+
+message MsgModifyExecutor {
+  option (cosmos.msg.v1.signer) = "modifier";
+  string modifier = 1;
+  string new_executor = 2;
+  uint64 id = 3;
+  uint64 new_executor_roll_block = 4;
+}
+
+message MsgModifyExecutorResponse {}
+
+message MsgModifyOwner {
+  option (cosmos.msg.v1.signer) = "modifier";
+  string modifier = 1;
+  string new_owner = 2;
+  uint64 id = 3;
+}
+
+message MsgModifyOwnerResponse {}
+
+message MsgModifyMaxTxs {
+  option (cosmos.msg.v1.signer) = "modifier";
+  string modifier = 1;
+  uint64 new_max_txs = 2;
+  uint64 id = 3;
+}
+
+message MsgModifyMaxTxsResponse {}
+
+message MsgDeregister {
+  option (cosmos.msg.v1.signer) = "sender";
+  string sender = 1;
+  uint64 id = 2;
+  uint64 end_block = 3;
+}
+
+message MsgDeregisterResponse {}
+
+message MsgEnableRoll {
+  option (cosmos.msg.v1.signer) = "sender";
+  string sender = 1;
+  uint64 roll_start_block = 2;
+  uint64 roll_id = 3;
+}
+
+message MsgEnableRollResponse { bool enabled = 1; }
+
+message MsgAddStack {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "elder/x/registration/MsgAddStack";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // NOTE: name must be non-blank.
+  string name = 2;
+}
+
+message MsgAddStackResponse { uint64 id = 1; }
+
+message MsgAddDa {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "elder/x/registration/MsgAddDa";
+
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+
+  // params defines the module parameters to update.
+
+  // NOTE: .
+  string name = 2;
+}
+
+message MsgAddDaResponse { uint64 id = 1; }

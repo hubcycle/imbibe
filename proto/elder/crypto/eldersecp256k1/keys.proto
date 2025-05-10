@@ -1,0 +1,16 @@
+syntax = "proto3";
+package elder.crypto.eldersecp256k1;
+
+option go_package = "github.com/0xElder/elder/crypto/eldersecp256k1";
+
+// PubKey defines a type alias for an ecdsa.PublicKey that implements ElderSecp256k1's PubKey interface. It represents the 33-byte compressed public key format.
+message PubKey {
+  // key is the public key in byte form
+  bytes key = 1;
+}
+
+// PrivKey defines a type alias for an ecdsa.PrivateKey that implements ElderSecp256k1's PrivateKey interface.
+message PrivKey {
+  // key is the private key in byte form
+  bytes key = 1;
+}

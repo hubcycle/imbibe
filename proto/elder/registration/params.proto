@@ -1,0 +1,20 @@
+syntax = "proto3";
+package elder.registration;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/0xElder/elder/x/registration/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "elder/x/registration/Params";
+  option (gogoproto.equal) = true;
+
+  cosmos.base.v1beta1.Coin min_stake = 1
+      [ (gogoproto.nullable) = true, (amino.dont_omitempty) = false ];
+  uint64 max_name_length = 2;
+  uint64 min_name_length = 3;
+  uint64 update_period = 4;
+}

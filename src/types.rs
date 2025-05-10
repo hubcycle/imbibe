@@ -12,3 +12,12 @@ impl Sha256 {
 		&self.0
 	}
 }
+
+impl<T> From<T> for Sha256
+where
+	[u8; Self::LEN]: From<T>,
+{
+	fn from(hash: T) -> Self {
+		Self::new(hash.into())
+	}
+}

@@ -1,4 +1,5 @@
 use bon::Builder;
+use bytes::Bytes;
 use jiff::Timestamp;
 
 use crate::types::Sha256;
@@ -8,7 +9,8 @@ use super::{AppHash, ValidatorAddress};
 #[derive(Debug, Clone, Builder)]
 pub struct Block {
 	header: Header,
-	data: Vec<Vec<u8>>,
+	data: Vec<Bytes>,
+	gas_used: u64,
 	hash: Sha256,
 }
 
@@ -33,8 +35,12 @@ impl Block {
 		&self.header
 	}
 
-	pub fn data(&self) -> &[impl AsRef<[u8]>] {
+	pub fn data(&self) -> &[Bytes] {
 		&self.data
+	}
+
+	pub fn gas_used(&self) -> u64 {
+		self.gas_used
 	}
 
 	pub fn hash(&self) -> &Sha256 {

@@ -1,0 +1,12 @@
+syntax = "proto3";
+package elder.router;
+
+option go_package = "github.com/0xElder/elder/x/router/types";
+
+// RollTxs contains the tx corresponding to particular roll
+message RollTxs { repeated bytes txs = 1; }
+
+message QueryRollTxList {
+  uint64 block = 1;
+  repeated bytes tx_list = 2;
+}

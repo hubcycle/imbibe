@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package elder.router;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "elder/router/params.proto";
+import "elder/router/roll_txs.proto";
+
+option go_package = "github.com/0xElder/elder/x/router/types";
+
+// Query defines the gRPC querier service.
+service Query {
+
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/0xElder/elder/router/params";
+  }
+
+  // Queries a list of TxList items.
+  rpc TxList(QueryTxListRequest) returns (QueryTxListResponse) {
+    option (google.api.http).get =
+        "/0xElder/elder/router/tx_list/{roll_id}/{start_block}/{end_block}";
+  }
+
+  // Queries a list of TxByBlock items.
+  rpc TxsByBlock(QueryTxsByBlockRequest) returns (QueryTxsByBlockResponse) {
+    option (google.api.http).get =
+        "/0xElder/elder/router/tx_by_block/{roll_id}/{block}";
+  }
+}
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+
+  // params holds all the parameters of this module.
+  Params params = 1
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+
+message QueryTxListRequest {
+  uint64 roll_id = 1;
+  uint64 start_block = 2;
+  uint64 end_block = 3;
+}
+
+message QueryTxListResponse {
+  uint64 roll_id = 1;
+  repeated QueryRollTxList txs = 2;
+  uint64 current_height = 3;
+}
+
+message QueryTxsByBlockRequest {
+  uint64 roll_id = 1;
+  uint64 block = 2;
+}
+
+message QueryTxsByBlockResponse {
+  uint64 roll_id = 1;
+  QueryRollTxList txs = 2;
+  uint64 current_height = 3;
+}

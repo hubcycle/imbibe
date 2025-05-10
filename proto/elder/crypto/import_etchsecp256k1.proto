@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package elder.crypto;
+
+import "ethermint/crypto/v1/ethsecp256k1/keys.proto";

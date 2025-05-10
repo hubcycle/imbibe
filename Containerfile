@@ -1,6 +1,10 @@
+FROM docker.io/bufbuild/buf:latest AS buf-provider
+
 FROM docker.io/rust:latest AS builder
 
-RUN apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev
+COPY --from=buf-provider /usr/local/bin/buf /usr/local/bin/buf
+
+RUN apt-get update && apt-get install -y pkg-config libssl-dev libpq-dev protobuf-compiler
 
 WORKDIR /app
 COPY . .

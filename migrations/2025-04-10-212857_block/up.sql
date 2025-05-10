@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS block (
     -- Primary key: block height
     height BIGINT PRIMARY KEY,
 
-    block_hash BYTEA NOT NULL,
+    block_hash BYTEA NOT NULL UNIQUE,
 
     -- Header fields
     chain_id TEXT NOT NULL,
@@ -16,13 +16,11 @@ CREATE TABLE IF NOT EXISTS block (
     consensus_hash BYTEA NOT NULL,
     proposer_address BYTEA NOT NULL,
 
+    gas_used BIGINT NOT NULL,
     last_commit_hash BYTEA,
     data_hash BYTEA,
     last_results_hash BYTEA,
     evidence_hash BYTEA,
-
-    -- Block data
-    data BYTEA[],
 
     -- Constraints for SHA256 (32 bytes) and address (20 bytes)
     CONSTRAINT chk_block_hash_len CHECK (

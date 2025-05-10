@@ -1,4 +1,5 @@
 pub mod block;
+pub mod tx;
 
 #[derive(Debug, Clone)]
 pub struct AppHash(Vec<u8>);

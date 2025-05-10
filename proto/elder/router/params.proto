@@ -1,0 +1,15 @@
+syntax = "proto3";
+package elder.router;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/0xElder/elder/x/router/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (amino.name) = "elder/x/router/Params";
+  option (gogoproto.equal) = true;
+
+  uint64 delete_period = 1;
+}
