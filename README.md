@@ -1,6 +1,3 @@
-Here is the entire `README.md` in a single code block:
-
-```markdown
 # Imbibe – A Cosmos SDK Indexer in Rust
 
 **Imbibe** is a high-performance, asynchronous indexer for Cosmos SDK-based blockchains written in Rust. It supports both live block ingestion and historical block backfilling, and stores all block and transaction data into a PostgreSQL database.
@@ -182,6 +179,3 @@ MIT OR Apache-2.0
 ## 👋 Contributing
 
 PRs and issues welcome! If you're indexing a new chain or need extended support, feel free to open a feature request.
-```
-
-You can copy and paste this into your markdown file. Let me know if you need further adjustments!
