@@ -8,7 +8,7 @@ use crate::domain::{block::Block, tx::TxResult};
 
 use super::{
 	DbConn,
-	record::insert::{NewBlockRecord, NewMsgRecord, NewTxFeeRecord, NewTxRecord},
+	record::insert::{NewBlockRecord, NewFeeRecord, NewMsgRecord, NewTxRecord},
 	schema,
 };
 
@@ -20,34 +20,20 @@ pub async fn save_blocks_with_tx_resulsts<TXRS>(
 where
 	TXRS: AsRef<[TxResult]>,
 {
-	let mut new_block_records = vec![];
+	let mut new_block_records = Vec::with_capacity(blocks_with_tx_results.len());
 	let mut new_tx_records = vec![];
-
-	let mut new_fee_builders = vec![];
-	let mut new_msg_builders = vec![];
+	let mut new_fee_records = vec![];
+	let mut new_msg_records = vec![];
 
 	for (block, txrs) in blocks_with_tx_results {
 		new_block_records.push(NewBlockRecord::try_from(block)?);
 
-		for txr in txrs.as_ref().iter() {
-			let new_tx_record = NewTxRecord::try_from(txr)?;
-			new_tx_records.push(new_tx_record);
-
-			for coin in txr.fee() {
-				let fee_sans_tx_id_record = NewTxFeeRecord::builder()
-					.amount(coin.amount.try_into()?)
-					.denom(coin.denom.as_ref());
-
-				new_fee_builders.push(fee_sans_tx_id_record);
-			}
-
-			let msg_sans_tx_id_records = txr
-				.msgs()
-				.iter()
-				.map(|m| NewMsgRecord::builder().type_url(&m.type_url).value(&m.value));
-
-			new_msg_builders.extend(msg_sans_tx_id_records);
-		}
+		process_new_records_from_tx_results(
+			txrs.as_ref(),
+			&mut new_tx_records,
+			&mut new_fee_records,
+			&mut new_msg_records,
+		)?;
 	}
 
 	conn.transaction(|conn| {
@@ -57,23 +43,8 @@ where
 				.execute(conn)
 				.await?;
 
-			let new_tx_ids: Vec<i64> = diesel::insert_into(schema::tx::table)
-				.values(new_tx_records)
-				.returning(schema::tx::id)
-				.get_results(conn)
-				.await?;
-
-			let (new_fee_records, new_msg_records): (Vec<_>, Vec<_>) = new_tx_ids
-				.into_iter()
-				.zip(new_fee_builders.into_iter().zip(new_msg_builders))
-				.map(|(id, (frb, mrb))| (frb.tx_id(id).build(), mrb.tx_id(id).build()))
-				.unzip();
-
-			diesel::insert_into(schema::tx_fee::table)
-				.values(new_fee_records)
-				.execute(conn)
-				.await?;
-
+			diesel::insert_into(schema::tx::table).values(new_tx_records).execute(conn).await?;
+			diesel::insert_into(schema::fee::table).values(new_fee_records).execute(conn).await?;
 			diesel::insert_into(schema::msg::table).values(new_msg_records).execute(conn).await?;
 
 			anyhow::Ok(())
@@ -93,8 +64,16 @@ pub async fn save_block_with_tx_results(
 ) -> anyhow::Result<()> {
 	let new_block_record = NewBlockRecord::try_from(block)?;
 
-	let new_tx_records: Vec<_> =
-		tx_results.iter().map(NewTxRecord::try_from).collect::<anyhow::Result<_>>()?;
+	let mut new_tx_records = Vec::with_capacity(tx_results.len());
+	let mut new_fee_records = vec![];
+	let mut new_msg_records = vec![];
+
+	process_new_records_from_tx_results(
+		tx_results,
+		&mut new_tx_records,
+		&mut new_fee_records,
+		&mut new_msg_records,
+	)?;
 
 	conn.transaction(|conn| {
 		async move {
@@ -103,42 +82,8 @@ pub async fn save_block_with_tx_results(
 				.execute(conn)
 				.await?;
 
-			let new_tx_ids: Vec<i64> = diesel::insert_into(schema::tx::table)
-				.values(new_tx_records)
-				.returning(schema::tx::id)
-				.get_results(conn)
-				.await?;
-
-			let mut new_fee_records = vec![];
-			let mut new_msg_records = vec![];
-
-			for (txr, tx_id) in tx_results.iter().zip(new_tx_ids) {
-				for coin in txr.fee() {
-					let tx_fee_record = NewTxFeeRecord::builder()
-						.tx_id(tx_id)
-						.amount(coin.amount.try_into()?)
-						.denom(coin.denom.as_ref())
-						.build();
-
-					new_fee_records.push(tx_fee_record);
-				}
-
-				let msg_records = txr.msgs().iter().map(|m| {
-					NewMsgRecord::builder()
-						.tx_id(tx_id)
-						.type_url(&m.type_url)
-						.value(&m.value)
-						.build()
-				});
-
-				new_msg_records.extend(msg_records);
-			}
-
-			diesel::insert_into(schema::tx_fee::table)
-				.values(new_fee_records)
-				.execute(conn)
-				.await?;
-
+			diesel::insert_into(schema::tx::table).values(new_tx_records).execute(conn).await?;
+			diesel::insert_into(schema::fee::table).values(new_fee_records).execute(conn).await?;
 			diesel::insert_into(schema::msg::table).values(new_msg_records).execute(conn).await?;
 
 			anyhow::Ok(())
@@ -181,4 +126,44 @@ pub async fn fetch_missing_block_heights(
 		.map(|h| h??);
 
 	Ok(stream)
+}
+
+fn process_new_records_from_tx_results<'a>(
+	tx_results: &'a [TxResult],
+	new_tx_records: &mut Vec<NewTxRecord<'a>>,
+	new_fee_records: &mut Vec<NewFeeRecord<'a>>,
+	new_msg_records: &mut Vec<NewMsgRecord<'a>>,
+) -> anyhow::Result<()> {
+	for txr in tx_results {
+		new_tx_records.push(NewTxRecord::try_from(txr)?);
+
+		let block_height = txr.block_height().get().try_into()?;
+		let tx_idx_in_block = txr.tx_idx_in_block().try_into()?;
+
+		for (idx, coin) in txr.fee().iter().enumerate() {
+			let fee_record = NewFeeRecord::builder()
+				.block_height(block_height)
+				.tx_idx_in_block(tx_idx_in_block)
+				.fee_idx_in_tx(idx.try_into()?)
+				.amount(coin.amount.try_into()?)
+				.denom(coin.denom.as_ref())
+				.build();
+
+			new_fee_records.push(fee_record);
+		}
+
+		for (idx, msg) in txr.msgs().iter().enumerate() {
+			let msg_record = NewMsgRecord::builder()
+				.block_height(block_height)
+				.tx_idx_in_block(tx_idx_in_block)
+				.msg_idx_in_tx(idx.try_into()?)
+				.type_url(&msg.type_url)
+				.value(&msg.value)
+				.build();
+
+			new_msg_records.push(msg_record);
+		}
+	}
+
+	Ok(())
 }

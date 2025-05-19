@@ -33,8 +33,10 @@ pub struct NewBlockRecord<'a> {
 #[derive(Insertable, Builder)]
 #[diesel(table_name = schema::tx)]
 pub struct NewTxRecord<'a> {
-	tx_hash: &'a [u8],
 	block_height: i64,
+	tx_idx_in_block: i64,
+
+	tx_hash: &'a [u8],
 
 	memo: Option<&'a str>,
 	timeout_height: Option<i64>,
@@ -54,9 +56,12 @@ pub struct NewTxRecord<'a> {
 }
 
 #[derive(Insertable, Builder)]
-#[diesel(table_name = schema::tx_fee)]
-pub struct NewTxFeeRecord<'a> {
-	tx_id: i64,
+#[diesel(table_name = schema::fee)]
+pub struct NewFeeRecord<'a> {
+	block_height: i64,
+	tx_idx_in_block: i64,
+	fee_idx_in_tx: i64,
+
 	amount: i64,
 	denom: &'a str,
 }
@@ -64,7 +69,10 @@ pub struct NewTxFeeRecord<'a> {
 #[derive(Insertable, Builder)]
 #[diesel(table_name = schema::msg)]
 pub struct NewMsgRecord<'a> {
-	tx_id: i64,
+	block_height: i64,
+	tx_idx_in_block: i64,
+	msg_idx_in_tx: i64,
+
 	type_url: &'a str,
 	value: &'a [u8],
 }
@@ -99,8 +107,9 @@ impl<'a> TryFrom<&'a TxResult> for NewTxRecord<'a> {
 
 	fn try_from(tx_result: &'a TxResult) -> Result<Self, Self::Error> {
 		let tx_record = NewTxRecord::builder()
-			.tx_hash(tx_result.tx_hash().get().as_slice())
 			.block_height(tx_result.block_height().get().try_into()?)
+			.tx_idx_in_block(tx_result.tx_idx_in_block().try_into()?)
+			.tx_hash(tx_result.tx_hash().get().as_slice())
 			.maybe_memo((!tx_result.memo().is_empty()).then_some(tx_result.memo()))
 			.timeout_height(
 				tx_result
@@ -119,6 +128,7 @@ impl<'a> TryFrom<&'a TxResult> for NewTxRecord<'a> {
 			.gas_used(tx_result.gas_used().try_into()?)
 			.code(tx_result.code().value().try_into()?)
 			.maybe_codespace((!tx_result.codespace().is_empty()).then_some(tx_result.codespace()))
+			.maybe_data_bz((!tx_result.data_bz().is_empty()).then_some(tx_result.data_bz()))
 			.tx_bz(tx_result.tx_bz())
 			.build();
 

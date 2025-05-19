@@ -12,8 +12,9 @@ use crate::types::Sha256;
 
 #[derive(Debug, Clone, Builder)]
 pub struct TxResult {
-	tx_hash: Sha256,
 	block_height: NonZeroU64,
+	tx_idx_in_block: u64,
+	tx_hash: Sha256,
 	msgs: Vec<Any>,
 	memo: String,
 	timeout_height: Option<NonZeroU64>,
@@ -32,12 +33,16 @@ pub struct TxResult {
 }
 
 impl TxResult {
-	pub fn tx_hash(&self) -> &Sha256 {
-		&self.tx_hash
-	}
-
 	pub fn block_height(&self) -> NonZeroU64 {
 		self.block_height
+	}
+
+	pub fn tx_idx_in_block(&self) -> u64 {
+		self.tx_idx_in_block
+	}
+
+	pub fn tx_hash(&self) -> &Sha256 {
+		&self.tx_hash
 	}
 
 	pub fn msgs(&self) -> &[Any] {

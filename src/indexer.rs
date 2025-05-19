@@ -97,7 +97,8 @@ where
 	let mut total_gas_used = 0u64;
 	let txrs = tbr
 		.into_iter()
-		.map(|(bz, res)| make_tx_result(hrp, height, bz, res))
+		.enumerate()
+		.map(|(idx, (bz, res))| make_tx_result(hrp, height, idx.try_into()?, bz, res))
 		.map(|txr| {
 			let txr = txr?;
 			total_gas_used = total_gas_used
@@ -113,6 +114,7 @@ where
 fn make_tx_result(
 	hrp: &str,
 	block_height: NonZeroU64,
+	tx_idx_in_block: u64,
 	tx_bz: Bytes,
 	exec_tx_result: ExecTxResult,
 ) -> anyhow::Result<TxResult> {
@@ -134,8 +136,9 @@ fn make_tx_result(
 	};
 
 	let tx_result = TxResult::builder()
-		.tx_hash(sha2::Sha256::digest(&tx_bz).into())
 		.block_height(block_height)
+		.tx_idx_in_block(tx_idx_in_block)
+		.tx_hash(sha2::Sha256::digest(&tx_bz).into())
 		.msgs(tx.body.messages)
 		.memo(tx.body.memo)
 		.maybe_timeout_height(tx.body.timeout_height.value().try_into().ok())
@@ -159,23 +162,17 @@ fn make_tx_result(
 fn signer_address(hrp: &str, signer: &SignerPublicKey) -> anyhow::Result<AccountId> {
 	let acc_id = match signer {
 		SignerPublicKey::Single(pk) => pk.account_id(hrp).map_err(anyhow::Error::msg)?,
-		SignerPublicKey::Any(any) => {
-			tracing::info!("got key {any:?}");
-			match any.to_msg() {
-				Ok(EthSecps256K1PubKey { key }) => {
-					tracing::info!("eth secp key {key:?}");
-					let encoded_point = PublicKey::from_sec1_bytes(&key)?.to_encoded_point(false);
-					let bytes = encoded_point.as_bytes();
+		SignerPublicKey::Any(any) => match any.to_msg() {
+			Ok(EthSecps256K1PubKey { key }) => {
+				let encoded_point = PublicKey::from_sec1_bytes(&key)?.to_encoded_point(false);
+				let bytes = encoded_point.as_bytes();
 
-					let keccak = Keccak256::digest(bytes.get(1..).context("invalid key")?);
-					let eth_addr = keccak.get(12..).context("keccak must be 32 bytes long")?;
+				let keccak = Keccak256::digest(bytes.get(1..).context("invalid key")?);
+				let eth_addr = keccak.get(12..).context("keccak must be 32 bytes long")?;
 
-					AccountId::new(hrp, eth_addr)
-						.inspect(|a| tracing::info!("payer address = {}", a.to_string()))
-						.map_err(anyhow::Error::msg)?
-				},
-				_ => anyhow::bail!("unsupported public key"),
-			}
+				AccountId::new(hrp, eth_addr).map_err(anyhow::Error::msg)?
+			},
+			_ => anyhow::bail!("unsupported public key"),
 		},
 		SignerPublicKey::LegacyAminoMultisig(_) => panic!("unsupported legacyaminomultisig"),
 	};

@@ -20,19 +20,30 @@ diesel::table! {
 }
 
 diesel::table! {
-    msg (id) {
-        id -> Int8,
-        tx_id -> Int8,
+    fee (block_height, tx_idx_in_block, fee_idx_in_tx) {
+        block_height -> Int8,
+        tx_idx_in_block -> Int8,
+        fee_idx_in_tx -> Int8,
+        amount -> Int8,
+        denom -> Text,
+    }
+}
+
+diesel::table! {
+    msg (block_height, tx_idx_in_block, msg_idx_in_tx) {
+        block_height -> Int8,
+        tx_idx_in_block -> Int8,
+        msg_idx_in_tx -> Int8,
         type_url -> Text,
         value -> Bytea,
     }
 }
 
 diesel::table! {
-    tx (id) {
-        id -> Int8,
-        tx_hash -> Bytea,
+    tx (block_height, tx_idx_in_block) {
         block_height -> Int8,
+        tx_idx_in_block -> Int8,
+        tx_hash -> Bytea,
         memo -> Nullable<Text>,
         timeout_height -> Nullable<Int8>,
         signatures -> Array<Nullable<Bytea>>,
@@ -49,22 +60,13 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    tx_fee (id) {
-        id -> Int8,
-        tx_id -> Int8,
-        amount -> Int8,
-        denom -> Text,
-    }
-}
-
-diesel::joinable!(msg -> tx (tx_id));
+diesel::joinable!(fee -> block (block_height));
+diesel::joinable!(msg -> block (block_height));
 diesel::joinable!(tx -> block (block_height));
-diesel::joinable!(tx_fee -> tx (tx_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     block,
+    fee,
     msg,
     tx,
-    tx_fee,
 );
