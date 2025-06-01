@@ -1,0 +1,31 @@
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+repository = "https://github.com/labcycle/imbibe"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[profile.dev]
+opt-level = 0
+debug = true
+incremental = true
+
+[profile.release]
+opt-level = 3
+debug = false
+lto = true
+strip = "symbols"
+
+[workspace]
+resolver = "3"
+members = [
+  "crates/*",
+]
+
+[workspace.dependencies]
+imbibe-macros = { path = "./crates/imbibe-macros" }
+
+cosmrs = "0.22"
+thiserror = "2"
