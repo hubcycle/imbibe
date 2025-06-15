@@ -25,11 +25,15 @@ members = [
 ]
 
 [workspace.dependencies]
+imbibe-domain = { path = "./crates/imbibe-domain" }
 imbibe-macros = { path = "./crates/imbibe-macros" }
 
 bon = "3.5"
 bytes = "1"
 cosmrs = "0.22"
+futures = "0.3"
 jiff = "0.2"
 serde = "1"
 thiserror = "2"
+tracing = "0.1"
+url = "2"
