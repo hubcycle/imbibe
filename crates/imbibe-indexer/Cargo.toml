@@ -1,0 +1,36 @@
+[package]
+name = "imbibe-indexer"
+version.workspace = true
+edition.workspace = true
+readme.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+custom-protos = ["imbibe-protos/custom"]
+ethsecp256k1 = [
+  "dep:k256",
+  "dep:sha3",
+  "imbibe-protos/ethsecp256k1",
+]
+
+[dependencies]
+bon = { workspace = true }
+bytes = { workspace = true }
+cosmrs = { workspace = true }
+futures = { workspace = true }
+imbibe-domain = { workspace = true }
+imbibe-persistence = { workspace = true }
+imbibe-protos = { workspace = true, features = ["cosmos"] }
+jiff = { workspace = true }
+k256 = { version = "0.13", optional = true }
+sha2 = "0.10"
+sha3 = { version = "0.10", optional = true }
+tendermint-rpc = { version = "0.40", features = ["websocket-client"] }
+thiserror = "2"
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
