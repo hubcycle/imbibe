@@ -14,4 +14,4 @@ Currenly, the selection of comos messages is controlled by the feature flags:
 
 ## Signer Extraction
 
-All the generated rust structs of cosmos messages whose corresponding protobuf messages contain the option `cosmos.v1.signer`, will implement the trait `GetSigners`. This returns an iterator over the bech32 addresses of the signers present inside the cosmos message.
+All the generated rust structs of cosmos messages whose corresponding protobuf messages contain the option `cosmos.msg.v1.signer`, will implement the trait `GetSigners`. This returns an iterator over the bech32 addresses of the signers present inside the cosmos message.
