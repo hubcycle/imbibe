@@ -26,9 +26,11 @@ members = [
 
 [workspace.dependencies]
 imbibe-domain = { path = "./crates/imbibe-domain" }
+imbibe-indexer = { path = "./crates/imbibe-indexer" }
 imbibe-macros = { path = "./crates/imbibe-macros" }
 imbibe-persistence = { path = "./crates/imbibe-persistence" }
 imbibe-protos = { path = "./crates/imbibe-protos" }
+imbibe-querier = { path = "./crates/imbibe-querier" }
 
 bon = "3.5"
 bytes = "1"
