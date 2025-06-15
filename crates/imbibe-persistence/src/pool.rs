@@ -9,14 +9,14 @@ use diesel_async::{
 		deadpool::{BuildError, Object, Pool},
 	},
 };
-use url::Url;
 
 pub type DbPool = Pool<AsyncPgConnection>;
 pub type DbConn = Object<AsyncPgConnection>;
 
-pub async fn establish_pool(url: Url, max_size: NonZeroUsize) -> Result<DbPool, BuildError> {
-	let pool =
-		Pool::builder(AsyncDieselConnectionManager::new(url)).max_size(max_size.get()).build()?;
-
-	Ok(pool)
+#[tracing::instrument(skip(url))]
+pub async fn establish_pool<U>(url: U, max_size: NonZeroUsize) -> Result<DbPool, BuildError>
+where
+	String: From<U>,
+{
+	Pool::builder(AsyncDieselConnectionManager::new(url)).max_size(max_size.get()).build()
 }
