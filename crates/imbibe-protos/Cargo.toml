@@ -1,0 +1,31 @@
+[package]
+name = "imbibe-protos"
+version.workspace = true
+edition.workspace = true
+readme.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+cosmos = ["protogen"]
+custom = ["protogen"]
+ethsecp256k1 = ["protogen"]
+protogen = []
+
+[dependencies]
+cosmrs = { workspace = true }
+imbibe-macros = { workspace = true }
+prost = "0.13"
+prost-types = "0.13"
+thiserror = { workspace = true }
+
+[build-dependencies]
+anyhow = "1"
+prost-build = "0.13"
+prost-reflect = "0.15"
+protoc-bin-vendored = "3"
+walkdir = "2"
