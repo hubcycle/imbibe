@@ -2,6 +2,7 @@
 version = "0.0.1"
 edition = "2024"
 repository = "https://github.com/labcycle/imbibe"
+license = "Apache-2.0"
 publish = false
 
 [workspace.lints.rust]
@@ -25,11 +26,21 @@ members = [
 ]
 
 [workspace.dependencies]
+imbibe-domain = { path = "./crates/imbibe-domain" }
+imbibe-indexer = { path = "./crates/imbibe-indexer" }
 imbibe-macros = { path = "./crates/imbibe-macros" }
+imbibe-persistence = { path = "./crates/imbibe-persistence" }
+imbibe-protos = { path = "./crates/imbibe-protos" }
+imbibe-querier = { path = "./crates/imbibe-querier" }
+imbibe-telemetry = { path = "./crates/imbibe-telemetry" }
 
 bon = "3.5"
 bytes = "1"
 cosmrs = "0.22"
+futures = "0.3"
 jiff = "0.2"
 serde = "1"
+tarpc = "0.36"
 thiserror = "2"
+tokio = "1"
+tracing = "0.1"

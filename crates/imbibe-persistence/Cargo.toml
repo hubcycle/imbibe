@@ -1,0 +1,38 @@
+[package]
+name = "imbibe-persistence"
+version.workspace = true
+edition.workspace = true
+readme = "README.md"
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+bundled = [
+  "openssl-sys/vendored",
+  "pq-sys/bundled",
+]
+database = [
+  "diesel/postgres",
+  "diesel-async/postgres",
+]
+
+[dependencies]
+bigdecimal = "0.4"
+bon = { workspace = true }
+chrono = "0.4"
+cosmrs = { workspace = true }
+diesel = { version = "2", features = ["chrono", "numeric", "serde_json"] }
+diesel-async = { version = "0.5", features = ["deadpool"] }
+futures = { workspace = true }
+imbibe-domain = { workspace = true }
+jiff = { workspace = true }
+openssl-sys = { version = "*", optional = true }
+pq-sys = { version = "*", optional = true }
+thiserror = { workspace = true }
+serde_json = "1"
+tracing = { workspace = true }

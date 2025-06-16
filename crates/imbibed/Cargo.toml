@@ -1,0 +1,51 @@
+[package]
+name = "imbibed"
+version.workspace = true
+edition.workspace = true
+readme = "README.md"
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+bundled = ["imbibe-persistence/bundled"]
+custom-protos = ["imbibe-indexer/custom-protos"]
+disable-telemetry = ["disable-tracing"]
+disable-tracing = [
+  "tracing/max_level_off",
+  "tracing/release_max_level_off",
+]
+ethsecp256k1 = ["imbibe-indexer/ethsecp256k1"]
+indexer = [
+  "dep:imbibe-indexer",
+  "persistence",
+]
+persistence = ["dep:imbibe-persistence"]
+querier = [
+  "dep:imbibe-querier",
+  "persistence",
+]
+tarpc-querier = [
+  "dep:futures",
+  "dep:tarpc",
+  "imbibe-querier/tarpc",
+  "querier",
+]
+
+[dependencies]
+anyhow = "1"
+config = { version = "0.15", default-features = false, features = ["ron"] }
+futures = { workspace = true, optional = true }
+imbibe-indexer = { workspace = true, optional = true }
+imbibe-persistence = { workspace = true, optional = true }
+imbibe-querier = { workspace = true, optional = true, features = ["server"] }
+imbibe-telemetry = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+tarpc = { workspace = true, optional = true, features = ["serde-transport-json", "tcp"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tracing = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

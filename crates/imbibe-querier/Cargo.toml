@@ -1,5 +1,5 @@
 [package]
-name = "imbibe-domain"
+name = "imbibe-querier"
 version.workspace = true
 edition.workspace = true
 readme = "README.md"
@@ -12,16 +12,21 @@ workspace = true
 
 [features]
 default = []
-serde = [
+server = ["imbibe-persistence/database"]
+tarpc = [
   "dep:serde",
-  "jiff/serde",
+  "dep:tarpc",
+  "dep:tokio",
+  "imbibe-domain/serde",
 ]
 
 [dependencies]
 bon = { workspace = true }
-bytes = { workspace = true }
-const-hex = "1.14"
-cosmrs = { workspace = true }
-jiff = { workspace = true }
+imbibe-domain = { workspace = true }
+imbibe-persistence = { workspace = true }
 serde = { workspace = true, optional = true, features = ["derive"] }
+tarpc = { workspace = true, optional = true }
 thiserror = { workspace = true }
+tokio = { workspace = true, optional = true, features = ["time"] }
+tracing = { workspace = true }
+
