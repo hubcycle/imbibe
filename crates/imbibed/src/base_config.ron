@@ -11,4 +11,8 @@ Config(
 	    batch: 1000,
 	    workers: 100,
     ),
+    telemetry: TelemetryConfig(
+        trace_exporter: "http://localhost:4317",
+        timeout_millis: 5000,
+    ),
 )

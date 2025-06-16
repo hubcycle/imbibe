@@ -10,4 +10,3 @@ pub enum QuerierError {
 	#[error("db pool error: {0}")]
 	DbPool(#[from] PoolError),
 }
-

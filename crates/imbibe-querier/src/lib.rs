@@ -52,4 +52,3 @@ impl Querier {
 			.inspect_err(|e| tracing::error!("{e}"))
 	}
 }
-

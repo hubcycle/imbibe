@@ -132,4 +132,3 @@ impl<T> BlockData<T> {
 		&self.0
 	}
 }
-
