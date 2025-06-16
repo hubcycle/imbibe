@@ -47,12 +47,12 @@ If signer extraction from custom cosmos messages is required, enable the feature
 cargo run --release --bin imbibed --features custom-protos --config 'env.PROTO_SRC_DIR = "<full path to the directory>"'
 ```
 
-### tracing
+### telemetry
 
-To disable tracing, use the feature flag `disable-tracing`:
+Telemetry is enabled by default. To disable telemetry, use the feature flag `disable-telemetry`:
 
 ```bash
-cargo run --release --bin imbibed --features ethsecp256k1 disable-tracing
+cargo run --release --bin imbibed --features ethsecp256k1 --features disable-telemetry
 ```
 
 ### bundling
@@ -62,5 +62,5 @@ By default [diesel](diesel.rs)(the ORM powering the indexer's database interacit
 To statically link these components, use the `bundled` feature:
 
 ```bash
-cargo run --release --bin imbibed --features ethsecp256k1 bundled
+cargo run --release --bin imbibed --features ethsecp256k1 --features bundled
 ```

@@ -10,6 +10,9 @@ pub struct Config {
 	pub db: DbConfig,
 
 	pub indexer: IndexerConfig,
+
+	#[cfg(not(feature = "disable-telemetry"))]
+	pub telemetry: TelemetryConfig,
 }
 
 #[derive(Deserialize)]
@@ -28,6 +31,13 @@ pub struct IndexerConfig {
 	pub tm_ws_url: String,
 	pub batch: NonZeroUsize,
 	pub workers: NonZeroUsize,
+}
+
+#[cfg(not(feature = "disable-telemetry"))]
+#[derive(Deserialize)]
+pub struct TelemetryConfig {
+	pub trace_exporter: String,
+	pub timeout_millis: u64,
 }
 
 pub fn get_configuration() -> Result<Config, ConfigError> {

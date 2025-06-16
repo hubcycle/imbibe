@@ -12,6 +12,7 @@ workspace = true
 default = []
 bundled = ["imbibe-persistence/bundled"]
 custom-protos = ["imbibe-indexer/custom-protos"]
+disable-telemetry = ["disable-tracing"]
 disable-tracing = [
   "tracing/max_level_off",
   "tracing/release_max_level_off",
@@ -23,6 +24,7 @@ anyhow = "1"
 config = { version = "0.15", default-features = false, features = ["ron"] }
 imbibe-indexer = { workspace = true }
 imbibe-persistence = { workspace = true }
+imbibe-telemetry = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tracing = { workspace = true }
