@@ -32,8 +32,11 @@ pub enum IndexerError {
 	#[error("consensus hash error: consensus hash must be present")]
 	ConsensusHash,
 
-	#[error("tx decode error: valid must be decodable")]
+	#[error("tx decode error: valid tx must be decodable")]
 	TxDecodeError,
+
+	#[error("tx data decode error: valid tx data must be decodable")]
+	TxDataDecodeError,
 
 	#[error("bech32 address error: invalid bech32 address: {0}")]
 	Bech32Address(String),

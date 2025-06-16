@@ -1,4 +1,7 @@
-use core::num::NonZeroU64;
+use core::{
+	fmt::{self, Formatter},
+	num::NonZeroU64,
+};
 
 use bon::Builder;
 use bytes::Bytes;
@@ -57,7 +60,7 @@ pub struct Codespace(String);
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Fees(Vec<Coin>);
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Msgs(Vec<Any>);
 
@@ -141,33 +144,9 @@ impl Memo {
 	}
 }
 
-impl AsRef<str> for Memo {
-	fn as_ref(&self) -> &str {
-		&self.0
-	}
-}
-
-impl From<Memo> for String {
-	fn from(memo: Memo) -> Self {
-		memo.0
-	}
-}
-
 impl Codespace {
 	pub fn new(memo: String) -> Option<Self> {
 		(!memo.is_empty()).then_some(memo).map(Self)
-	}
-}
-
-impl AsRef<str> for Codespace {
-	fn as_ref(&self) -> &str {
-		&self.0
-	}
-}
-
-impl From<Codespace> for String {
-	fn from(codespace: Codespace) -> Self {
-		codespace.0
 	}
 }
 
@@ -188,6 +167,47 @@ impl Msgs {
 
 	pub fn get(&self) -> &[Any] {
 		&self.0
+	}
+}
+
+impl AsRef<str> for Memo {
+	fn as_ref(&self) -> &str {
+		&self.0
+	}
+}
+
+impl From<Memo> for String {
+	fn from(memo: Memo) -> Self {
+		memo.0
+	}
+}
+
+impl AsRef<str> for Codespace {
+	fn as_ref(&self) -> &str {
+		&self.0
+	}
+}
+
+impl From<Codespace> for String {
+	fn from(codespace: Codespace) -> Self {
+		codespace.0
+	}
+}
+
+impl fmt::Debug for Msgs {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		let msgs: Vec<_> = self
+			.0
+			.iter()
+			.map(|any| {
+				format!(
+					"Any {{ type_url: \"{}\", value: {:?} }}",
+					any.type_url,
+					Bytes::copy_from_slice(&any.value)
+				)
+			})
+			.collect();
+		f.debug_struct("Msgs").field("msgs", &msgs).finish()
 	}
 }
 

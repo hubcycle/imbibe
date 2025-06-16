@@ -9,7 +9,7 @@ publish.workspace = true
 workspace = true
 
 [features]
-default = ["tarpc-querier"]
+default = []
 bundled = ["imbibe-persistence/bundled"]
 custom-protos = ["imbibe-indexer/custom-protos"]
 disable-telemetry = ["disable-tracing"]
@@ -40,7 +40,7 @@ config = { version = "0.15", default-features = false, features = ["ron"] }
 futures = { workspace = true, optional = true }
 imbibe-indexer = { workspace = true, optional = true }
 imbibe-persistence = { workspace = true, optional = true }
-imbibe-querier = { workspace = true, optional = true }
+imbibe-querier = { workspace = true, optional = true, features = ["server"] }
 imbibe-telemetry = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 tarpc = { workspace = true, optional = true, features = ["serde-transport-json", "tcp"] }

@@ -2,7 +2,7 @@
 name = "imbibe-indexer"
 version.workspace = true
 edition.workspace = true
-readme.workspace = true
+readme = "README.md"
 repository.workspace = true
 publish.workspace = true
 
@@ -19,12 +19,13 @@ ethsecp256k1 = [
 ]
 
 [dependencies]
+base64 = "0.22"
 bon = { workspace = true }
 bytes = { workspace = true }
 cosmrs = { workspace = true }
 futures = { workspace = true }
 imbibe-domain = { workspace = true }
-imbibe-persistence = { workspace = true }
+imbibe-persistence = { workspace = true, features = ["database"] }
 imbibe-protos = { workspace = true, features = ["cosmos"] }
 jiff = { workspace = true }
 k256 = { version = "0.13", optional = true }

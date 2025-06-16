@@ -1,12 +1,14 @@
 pub mod block;
 pub mod tx;
 
+use core::fmt::{Debug, Formatter, Result};
+
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use cosmrs::tendermint::account::Id;
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Sha256([u8; Self::LEN]);
 
@@ -36,6 +38,16 @@ where
 {
 	fn from(hash: T) -> Self {
 		Self::new(hash.into())
+	}
+}
+
+impl Debug for Sha256 {
+	fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+		write!(
+			f,
+			"Sha256({})",
+			const_hex::const_encode::<32, false>(self.get()).as_str()
+		)
 	}
 }
 

@@ -1,3 +1,5 @@
+use core::fmt::{self, Debug, Formatter};
+
 use bon::Builder;
 use bytes::Bytes;
 use jiff::Timestamp;
@@ -33,7 +35,7 @@ pub struct Header {
 	evidence_hash: Option<Sha256>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AppHash(Vec<u8>);
 
@@ -130,5 +132,11 @@ impl<T> BlockData<T> {
 
 	pub fn get(&self) -> &[NonEmptyBz<T>] {
 		&self.0
+	}
+}
+
+impl Debug for AppHash {
+	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+		write!(f, "AppHash({})", const_hex::encode(self.get()))
 	}
 }
