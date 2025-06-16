@@ -11,6 +11,9 @@ Config(
 	    batch: 1000,
 	    workers: 100,
     ),
+    querier: QuerierConfig (
+        listen: "localhost:18181",
+    ),
     telemetry: TelemetryConfig(
         trace_exporter: "http://localhost:4317",
         timeout_millis: 5000,

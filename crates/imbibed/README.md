@@ -1,6 +1,6 @@
 # imbibed
 
-Binary crate that drives the indexer. It establishes a pooled connection with the database, and depending on configuration, starts one instance each of `LiveIndexer` and `BackfillIndexer`. To read more about the Indexer strategies, refer to `imbibe-indexer` crate.
+Binary crate that drives the indexer. It establishes a pooled connection with the database, and depending on configuration, starts one instance each of `LiveIndexer` and `BackfillIndexer`, or a [tarpc](github.com/google/tarpc) query server that serves tarpc queries, or both. To read more about the Indexer and Querier strategies, refer to `imbibe-indexer` and `imbibe-querier` crates.
 
 ## config
 
@@ -19,13 +19,22 @@ Config(
 	    batch: 1000,
 	    workers: 100,
     ),
+    querier: QuerierConfig (
+        listen: "localhost:18181", // tarpc listening address
+    ),
+    telemetry: TelemetryConfig(
+        trace_exporter: "http://localhost:4317",
+        timeout_millis: 5000,
+    ),
 )
 ```
 
-To override a field (say `db.db.max_conn = 20`), set the respective prefixed environment variable (here `IMBIBED_DB__MAX_CONN=20`).
+To override a field (say `db.max_conn = 20`), set the respective prefixed environment variable (here `IMBIBED_DB__MAX_CONN=20`).
 
 
 ## start the indexer
+
+The feature `indexer` must be enabled for this.
 
 After the config is set, ensure that the database has the correct table layout as described in `imbibe-persisten/migrations`.
 
@@ -47,14 +56,6 @@ If signer extraction from custom cosmos messages is required, enable the feature
 cargo run --release --bin imbibed --features custom-protos --config 'env.PROTO_SRC_DIR = "<full path to the directory>"'
 ```
 
-### telemetry
-
-Telemetry is enabled by default. To disable telemetry, use the feature flag `disable-telemetry`:
-
-```bash
-cargo run --release --bin imbibed --features ethsecp256k1 --features disable-telemetry
-```
-
 ### bundling
 
 By default [diesel](diesel.rs)(the ORM powering the indexer's database interaciton) dynamically links to `libpq` for PostgeSQL client interaction and `libssl`/`libcrypto` for encrypted connections leveragin OpenSSL libraries.
@@ -64,3 +65,22 @@ To statically link these components, use the `bundled` feature:
 ```bash
 cargo run --release --bin imbibed --features ethsecp256k1 --features bundled
 ```
+
+## tarpc-querier
+
+The feature `tarpc-querier` must be enabled for this.
+
+The query server can be started with:
+
+```bash
+cargo run --release --bin imbibed --features ethsecp256k1 --features tarpc-querier
+```
+
+## telemetry
+
+Telemetry is enabled by default. To disable telemetry, use the feature flag `disable-telemetry`:
+
+```bash
+cargo run --release --bin imbibed --features ethsecp256k1 --features disable-telemetry
+```
+

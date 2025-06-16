@@ -10,11 +10,20 @@ workspace = true
 
 [features]
 default = []
+tarpc = [
+  "dep:serde",
+  "dep:tarpc",
+  "dep:tokio",
+  "imbibe-domain/serde",
+]
 
 [dependencies]
 bon = { workspace = true }
 imbibe-domain = { workspace = true }
 imbibe-persistence = { workspace = true }
-tracing = { workspace = true }
+serde = { workspace = true, optional = true, features = ["derive"] }
+tarpc = { workspace = true, optional = true }
 thiserror = { workspace = true }
+tokio = { workspace = true, optional = true, features = ["time"] }
+tracing = { workspace = true }
 

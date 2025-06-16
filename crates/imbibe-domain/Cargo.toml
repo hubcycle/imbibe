@@ -23,4 +23,3 @@ cosmrs = { workspace = true }
 jiff = { workspace = true }
 serde = { workspace = true, optional = true, features = ["derive"] }
 thiserror = { workspace = true }
-

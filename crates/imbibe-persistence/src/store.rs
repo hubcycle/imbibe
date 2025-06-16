@@ -179,8 +179,9 @@ pub async fn fetch_block_by_height(conn: &mut DbConn, height: NonZeroU64) -> Res
 
 #[tracing::instrument(skip(conn))]
 pub async fn fetch_block_by_block_hash(conn: &mut DbConn, block_hash: &Sha256) -> Result<Block> {
-	let tx_bz_array_agg =
-		dsl::sql::<Array<Bytea>>("array_agg(tx.tx_bz ORDER BY tx.tx_idx_in_block ASC)");
+	let tx_bz_array_agg = dsl::sql::<Array<Bytea>>(
+		"COALESCE(NULLIF(array_agg(tx.tx_bz ORDER BY tx.tx_idx_in_block ASC), '{NULL}'), '{}')",
+	);
 
 	schema::block::table
 		.left_join(schema::tx::table.on(schema::tx::block_height.eq(schema::block::height)))
