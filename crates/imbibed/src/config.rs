@@ -1,5 +1,3 @@
-use core::num::NonZeroUsize;
-
 use config::{ConfigError, Environment, File, FileFormat};
 use serde::Deserialize;
 
@@ -7,9 +5,14 @@ use serde::Deserialize;
 pub struct Config {
 	pub app: AppConfig,
 
+	#[cfg(feature = "persistence")]
 	pub db: DbConfig,
 
+	#[cfg(feature = "indexer")]
 	pub indexer: IndexerConfig,
+
+	#[cfg(feature = "querier")]
+	pub querier: QuerierConfig,
 
 	#[cfg(not(feature = "disable-telemetry"))]
 	pub telemetry: TelemetryConfig,
@@ -20,17 +23,25 @@ pub struct AppConfig {
 	pub name: String,
 }
 
+#[cfg(feature = "persistence")]
 #[derive(Deserialize)]
 pub struct DbConfig {
 	pub db_url: String,
-	pub max_conn: NonZeroUsize,
+	pub max_conn: core::num::NonZeroUsize,
 }
 
+#[cfg(feature = "indexer")]
 #[derive(Deserialize)]
 pub struct IndexerConfig {
 	pub tm_ws_url: String,
-	pub batch: NonZeroUsize,
-	pub workers: NonZeroUsize,
+	pub batch: core::num::NonZeroUsize,
+	pub workers: core::num::NonZeroUsize,
+}
+
+#[cfg(feature = "querier")]
+#[derive(Deserialize)]
+pub struct QuerierConfig {
+	pub listen: String,
 }
 
 #[cfg(not(feature = "disable-telemetry"))]

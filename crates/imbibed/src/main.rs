@@ -1,4 +1,3 @@
-use imbibe_persistence::pool;
 use imbibed::config;
 
 #[tokio::main]
@@ -15,18 +14,33 @@ async fn main() -> anyhow::Result<()> {
 	)
 	.and_then(imbibe_telemetry::init_subscriber)?;
 
-	let pool = pool::establish_pool(config.db.db_url, config.db.max_conn).await?;
+	#[cfg(feature = "persistence")]
+	let pool = imbibe_persistence::pool::establish_pool(config.db.db_url, config.db.max_conn).await?;
 
-	let indexer = imbibed::indexer::run(
-		config.indexer.tm_ws_url,
-		pool,
-		config.indexer.batch,
-		config.indexer.workers,
-	);
+	#[cfg(feature = "indexer")]
+	let indexer_handle = {
+		let indexer = imbibed::indexer::run(
+			config.indexer.tm_ws_url,
+			pool.clone(),
+			config.indexer.batch,
+			config.indexer.workers,
+		);
 
-	let indexer_handle = tokio::spawn(indexer);
+		tokio::spawn(indexer)
+	};
 
+	#[cfg(feature = "tarpc-querier")]
+	let tarpc_querier_handle = {
+		let tarpc_querier = imbibed::tarpc_querier::run(pool, config.querier.listen);
+
+		tokio::spawn(tarpc_querier)
+	};
+
+	#[cfg(feature = "indexer")]
 	indexer_handle.await??;
+
+	#[cfg(feature = "tarpc-querier")]
+	tarpc_querier_handle.await??;
 
 	Ok(())
 }
