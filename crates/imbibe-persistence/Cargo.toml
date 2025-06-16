@@ -2,7 +2,7 @@
 name = "imbibe-persistence"
 version.workspace = true
 edition.workspace = true
-readme.workspace = true
+readme = "README.md"
 repository.workspace = true
 publish.workspace = true
 
@@ -15,14 +15,18 @@ bundled = [
   "openssl-sys/vendored",
   "pq-sys/bundled",
 ]
+database = [
+  "diesel/postgres",
+  "diesel-async/postgres",
+]
 
 [dependencies]
 bigdecimal = "0.4"
 bon = { workspace = true }
 chrono = "0.4"
 cosmrs = { workspace = true }
-diesel = { version = "2", features = ["chrono", "postgres", "numeric", "serde_json"] }
-diesel-async = { version = "0.5", features = ["deadpool", "postgres"] }
+diesel = { version = "2", features = ["chrono", "numeric", "serde_json"] }
+diesel-async = { version = "0.5", features = ["deadpool"] }
 futures = { workspace = true }
 imbibe-domain = { workspace = true }
 jiff = { workspace = true }

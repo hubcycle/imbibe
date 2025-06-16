@@ -3,8 +3,8 @@ use core::future;
 use futures::StreamExt;
 use imbibe_persistence::pool::DbPool;
 use imbibe_querier::{
-	Querier,
-	tarpc::{Query, QueryServer},
+	server::Querier,
+	tarpc::{Query, server::QueryServer},
 };
 use tarpc::{
 	server::{BaseChannel, Channel, incoming::Incoming},

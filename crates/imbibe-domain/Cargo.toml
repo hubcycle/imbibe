@@ -2,7 +2,7 @@
 name = "imbibe-domain"
 version.workspace = true
 edition.workspace = true
-readme.workspace = true
+readme = "README.md"
 repository.workspace = true
 publish.workspace = true
 
@@ -19,6 +19,7 @@ serde = [
 [dependencies]
 bon = { workspace = true }
 bytes = { workspace = true }
+const-hex = "1.14"
 cosmrs = { workspace = true }
 jiff = { workspace = true }
 serde = { workspace = true, optional = true, features = ["derive"] }

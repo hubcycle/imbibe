@@ -9,6 +9,7 @@ pub use self::{backfill::BackfillIndexer, live::LiveIndexer};
 
 use core::num::NonZeroU64;
 
+use base64::{Engine, prelude::BASE64_STANDARD};
 use bytes::Bytes;
 use cosmrs::{
 	AccountId,
@@ -196,7 +197,13 @@ fn make_tx(
 		.gas_limit(cosm_tx.auth_info.fee.gas_limit)
 		.gas_wanted(exec_tx_result.gas_wanted.try_into().map_err(|_| IndexerError::Gas)?)
 		.gas_used(exec_tx_result.gas_used.try_into().map_err(|_| IndexerError::Gas)?)
-		.maybe_data_bz(NonEmptyBz::new(exec_tx_result.data))
+		.maybe_data_bz(
+			BASE64_STANDARD
+				.decode(exec_tx_result.data)
+				.map(From::from)
+				.map(NonEmptyBz::new)
+				.map_err(|_| IndexerError::TxDataDecodeError)?,
+		)
 		.tx_bz(tx_bz)
 		.build();
 

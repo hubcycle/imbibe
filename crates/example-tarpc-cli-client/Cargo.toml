@@ -1,0 +1,21 @@
+[package]
+name = "example-tarpc-cli-client"
+version.workspace = true
+edition.workspace = true
+readme = "README.md"
+repository.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4.5", features = ["derive"] }
+const-hex = "1"
+imbibe-domain = { workspace = true }
+imbibe-querier = { workspace = true, features = ["tarpc"] }
+serde = { workspace = true, features = ["derive"] }
+tarpc = { workspace = true, features = ["serde-transport-json", "tcp"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+

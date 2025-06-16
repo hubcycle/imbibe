@@ -14,6 +14,7 @@ mod codegen {
 
 #[cfg(feature = "protogen")]
 mod signer_extractor {
+	#[allow(unused_imports)]
 	use super::{GetSigners, codegen::*, error};
 
 	macro_rules! generate_signer_extractors {

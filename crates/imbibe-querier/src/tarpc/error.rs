@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::QuerierError;
 
-pub type Result<T, E = QueryTarpcError> = core::result::Result<T, E>;
-
 #[derive(Debug, thiserror::Error, Serialize, Deserialize)]
 #[error("{msg}")]
 pub struct QueryTarpcError {
