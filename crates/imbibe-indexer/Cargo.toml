@@ -2,6 +2,7 @@
 name = "imbibe-indexer"
 version.workspace = true
 edition.workspace = true
+description = "provides indexing strategies for imbibe"
 readme = "README.md"
 repository.workspace = true
 license.workspace = true

@@ -2,6 +2,7 @@
 name = "imbibe-persistence"
 version.workspace = true
 edition.workspace = true
+description = "details the database model of the information extracted from a block and its constituent transactions"
 readme = "README.md"
 repository.workspace = true
 license.workspace = true
