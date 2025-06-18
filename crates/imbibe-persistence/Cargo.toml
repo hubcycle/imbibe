@@ -1,6 +1,6 @@
 [package]
 name = "imbibe-persistence"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 description = "details the database model of the information extracted from a block and its constituent transactions"
 readme = "README.md"

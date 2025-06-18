@@ -1,6 +1,6 @@
 [package]
 name = "imbibe-macros"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 description = "contains the proc macros used by imbibe components"
 readme = "README.md"

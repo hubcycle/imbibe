@@ -1,6 +1,6 @@
 [package]
 name = "imbibe-domain"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 description = "holds the types related to Block and Tx used throughrout imbibe"
 readme = "README.md"

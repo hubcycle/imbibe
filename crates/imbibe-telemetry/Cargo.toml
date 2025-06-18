@@ -1,6 +1,6 @@
 [package]
 name = "imbibe-telemetry"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 description = "contains helper methods for open-telemetry support for imbibe"
 readme = "README.md"
