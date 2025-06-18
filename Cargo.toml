@@ -3,7 +3,7 @@ version = "0.0.1"
 edition = "2024"
 repository = "https://github.com/labcycle/imbibe"
 license = "Apache-2.0"
-publish = false
+publish = true
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
