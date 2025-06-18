@@ -26,13 +26,13 @@ members = [
 ]
 
 [workspace.dependencies]
-imbibe-domain = { path = "./crates/imbibe-domain" }
-imbibe-indexer = { path = "./crates/imbibe-indexer" }
-imbibe-macros = { path = "./crates/imbibe-macros" }
-imbibe-persistence = { path = "./crates/imbibe-persistence" }
-imbibe-protos = { path = "./crates/imbibe-protos" }
-imbibe-querier = { path = "./crates/imbibe-querier" }
-imbibe-telemetry = { path = "./crates/imbibe-telemetry" }
+imbibe-domain = { version = "0.0.1", path = "./crates/imbibe-domain" }
+imbibe-indexer = { version = "0.0.1", path = "./crates/imbibe-indexer" }
+imbibe-macros = { version = "0.0.1", path = "./crates/imbibe-macros" }
+imbibe-persistence = { version = "0.0.1", path = "./crates/imbibe-persistence" }
+imbibe-protos = { version = "0.0.1", path = "./crates/imbibe-protos" }
+imbibe-querier = { version = "0.0.1", path = "./crates/imbibe-querier" }
+imbibe-telemetry = { version = "0.0.1", path = "./crates/imbibe-telemetry" }
 
 bon = "3.5"
 bytes = "1"
