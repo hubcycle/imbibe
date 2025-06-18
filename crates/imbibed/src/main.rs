@@ -1,4 +1,4 @@
-use imbibed::config;
+use imbibe::config;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -19,7 +19,7 @@ async fn main() -> anyhow::Result<()> {
 
 	#[cfg(feature = "indexer")]
 	let indexer_handle = {
-		let indexer = imbibed::indexer::run(
+		let indexer = imbibe::indexer::run(
 			config.indexer.tm_ws_url,
 			pool.clone(),
 			config.indexer.batch,
@@ -31,7 +31,7 @@ async fn main() -> anyhow::Result<()> {
 
 	#[cfg(feature = "tarpc-querier")]
 	let tarpc_querier_handle = {
-		let tarpc_querier = imbibed::tarpc_querier::run(pool, config.querier.listen);
+		let tarpc_querier = imbibe::tarpc_querier::run(pool, config.querier.listen);
 
 		tokio::spawn(tarpc_querier)
 	};
