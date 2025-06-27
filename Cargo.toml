@@ -1,7 +1,7 @@
 [workspace.package]
 version = "0.0.1"
 edition = "2024"
-repository = "https://github.com/labcycle/imbibe"
+repository = "https://github.com/hubcycle/imbibe"
 license = "Apache-2.0"
 publish = true
 

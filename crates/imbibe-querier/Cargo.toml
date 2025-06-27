@@ -2,7 +2,7 @@
 name = "imbibe-querier"
 version = "0.0.1"
 edition.workspace = true
-description = "provides Querier that holds a database connection pool, and provides methods to perform various read operations on the database for imbibe"
+description = "provides Querier to hold a database connection pool, and methods to perform various read operations on the database"
 readme = "README.md"
 repository.workspace = true
 license.workspace = true
