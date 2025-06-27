@@ -1,6 +1,6 @@
 [package]
 name = "imbibe-protos"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 description = "dictates the code generation of rust structs from the given protobuf messages"
 readme = "README.md"
