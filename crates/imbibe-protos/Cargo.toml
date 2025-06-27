@@ -2,6 +2,7 @@
 name = "imbibe-protos"
 version.workspace = true
 edition.workspace = true
+description = "dictates the code generation of rust structs from the given protobuf messages"
 readme = "README.md"
 repository.workspace = true
 license.workspace = true

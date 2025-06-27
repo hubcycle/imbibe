@@ -2,6 +2,7 @@
 name = "imbibe-domain"
 version.workspace = true
 edition.workspace = true
+description = "types related to Block and Tx used in imbibe"
 readme = "README.md"
 repository.workspace = true
 license.workspace = true
