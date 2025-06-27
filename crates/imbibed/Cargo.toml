@@ -1,6 +1,6 @@
 [package]
 name = "imbibe"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 readme = "README.md"
 description = "a cosmos chain indexer"

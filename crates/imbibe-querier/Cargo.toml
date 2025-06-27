@@ -1,7 +1,8 @@
 [package]
 name = "imbibe-querier"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
+description = "provides Querier to hold a database connection pool, and methods to perform various read operations on the database"
 readme = "README.md"
 repository.workspace = true
 license.workspace = true

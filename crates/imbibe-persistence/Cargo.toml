@@ -1,7 +1,8 @@
 [package]
 name = "imbibe-persistence"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
+description = "database model of the information extracted from a block and its constituent transactions"
 readme = "README.md"
 repository.workspace = true
 license.workspace = true
@@ -31,8 +32,8 @@ diesel-async = { version = "0.5", features = ["deadpool"] }
 futures = { workspace = true }
 imbibe-domain = { workspace = true }
 jiff = { workspace = true }
-openssl-sys = { version = "*", optional = true }
-pq-sys = { version = "*", optional = true }
+openssl-sys = { version = "0.9", optional = true }
+pq-sys = { version = "0.7", optional = true }
 thiserror = { workspace = true }
 serde_json = "1"
 tracing = { workspace = true }
