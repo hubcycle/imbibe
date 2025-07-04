@@ -135,7 +135,7 @@ where
 		anyhow::bail!("buf export command failed with status: {}", buf_status);
 	}
 
-	println!("buf export of cosmos-sdk finished successfully");
+	println!("buf export of ethermint-ethsecp256k1 finished successfully");
 
 	Ok(())
 }
