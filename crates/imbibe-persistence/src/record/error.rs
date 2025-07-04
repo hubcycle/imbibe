@@ -1,4 +1,5 @@
 use core::{array::TryFromSliceError, num::TryFromIntError};
+use std::borrow::Cow;
 
 use cosmrs::ErrorReport;
 
@@ -27,5 +28,5 @@ pub enum InvalidValueError {
 	Json(#[from] serde_json::Error),
 
 	#[error("other error: {0}")]
-	Other(String),
+	Other(Cow<'static, str>),
 }

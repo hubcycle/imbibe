@@ -30,6 +30,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    fee_summary (since_blocks_ago, denom) {
+        since_blocks_ago -> Int8,
+        start_block_height -> Int8,
+        denom -> Text,
+        total_amount -> Numeric,
+        created_at -> Nullable<Timestamptz>,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
     msg (block_height, tx_idx_in_block, msg_idx_in_tx) {
         block_height -> Int8,
         tx_idx_in_block -> Int8,
@@ -68,6 +79,19 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    tx_summary (since_blocks_ago) {
+        since_blocks_ago -> Int8,
+        start_block_height -> Int8,
+        total_gas_used -> Int8,
+        total_txs -> Int8,
+        total_msgs -> Int8,
+        total_signatures -> Int8,
+        created_at -> Nullable<Timestamptz>,
+        updated_at -> Nullable<Timestamptz>,
+    }
+}
+
 diesel::joinable!(fee -> block (block_height));
 diesel::joinable!(msg -> block (block_height));
 diesel::joinable!(signature -> block (block_height));
@@ -76,7 +100,9 @@ diesel::joinable!(tx -> block (block_height));
 diesel::allow_tables_to_appear_in_same_query!(
     block,
     fee,
+    fee_summary,
     msg,
     signature,
     tx,
+    tx_summary,
 );

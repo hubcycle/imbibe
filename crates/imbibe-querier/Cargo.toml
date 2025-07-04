@@ -13,6 +13,16 @@ workspace = true
 
 [features]
 default = []
+graphql = [
+  "dep:async-graphql",
+  "dep:bytes",
+  "dep:chrono",
+  "dep:cosmrs",
+  "dep:futures",
+  "dep:jiff",
+  "dep:serde_json",
+  "server",
+]
 server = ["imbibe-persistence/database"]
 tarpc = [
   "dep:serde",
@@ -22,10 +32,17 @@ tarpc = [
 ]
 
 [dependencies]
+async-graphql = { workspace = true, optional = true, features = ["chrono"] }
 bon = { workspace = true }
+bytes = { workspace = true, optional = true }
+chrono = { version = "0.4", optional = true }
+cosmrs = { workspace = true, optional = true }
+futures = { workspace = true, optional = true }
 imbibe-domain = { workspace = true }
 imbibe-persistence = { workspace = true }
+jiff = { workspace = true, optional = true }
 serde = { workspace = true, optional = true, features = ["derive"] }
+serde_json = { workspace = true, optional = true }
 tarpc = { workspace = true, optional = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, optional = true, features = ["time"] }

@@ -1,4 +1,7 @@
-use core::fmt::{self, Debug, Formatter};
+use core::{
+	fmt::{self, Debug, Formatter},
+	num::NonZeroU64,
+};
 
 use bon::Builder;
 use bytes::Bytes;
@@ -22,7 +25,7 @@ pub struct Block<T = Bytes> {
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Header {
 	chain_id: String,
-	height: u64,
+	height: NonZeroU64,
 	time: Timestamp,
 	validators_hash: Sha256,
 	next_validators_hash: Sha256,
@@ -35,6 +38,28 @@ pub struct Header {
 	evidence_hash: Option<Sha256>,
 }
 
+pub struct BlockDissolved<T> {
+	pub header: Header,
+	pub gas_used: u64,
+	pub hash: Sha256,
+	pub data: BlockData<T>,
+}
+
+pub struct HeaderDissolved {
+	pub chain_id: String,
+	pub height: NonZeroU64,
+	pub time: Timestamp,
+	pub validators_hash: Sha256,
+	pub next_validators_hash: Sha256,
+	pub consensus_hash: Sha256,
+	pub app_hash: AppHash,
+	pub proposer: Address,
+	pub last_commit_hash: Option<Sha256>,
+	pub data_hash: Option<Sha256>,
+	pub last_results_hash: Option<Sha256>,
+	pub evidence_hash: Option<Sha256>,
+}
+
 #[derive(Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct AppHash(Vec<u8>);
@@ -43,12 +68,12 @@ pub struct AppHash(Vec<u8>);
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BlockData<T>(Vec<NonEmptyBz<T>>);
 
-impl Block {
+impl<T> Block<T> {
 	pub fn header(&self) -> &Header {
 		&self.header
 	}
 
-	pub fn data(&self) -> &BlockData<Bytes> {
+	pub fn data(&self) -> &BlockData<T> {
 		&self.data
 	}
 
@@ -59,6 +84,15 @@ impl Block {
 	pub fn hash(&self) -> &Sha256 {
 		&self.hash
 	}
+
+	pub fn dissolve(self) -> BlockDissolved<T> {
+		BlockDissolved {
+			header: self.header,
+			gas_used: self.gas_used,
+			hash: self.hash,
+			data: self.data,
+		}
+	}
 }
 
 impl Header {
@@ -66,7 +100,7 @@ impl Header {
 		&self.chain_id
 	}
 
-	pub fn height(&self) -> u64 {
+	pub fn height(&self) -> NonZeroU64 {
 		self.height
 	}
 
@@ -109,6 +143,23 @@ impl Header {
 	pub fn evidence_hash(&self) -> Option<&Sha256> {
 		self.evidence_hash.as_ref()
 	}
+
+	pub fn dissolve(self) -> HeaderDissolved {
+		HeaderDissolved {
+			chain_id: self.chain_id,
+			height: self.height,
+			time: self.time,
+			validators_hash: self.validators_hash,
+			next_validators_hash: self.next_validators_hash,
+			consensus_hash: self.consensus_hash,
+			app_hash: self.app_hash,
+			proposer: self.proposer,
+			last_commit_hash: self.last_commit_hash,
+			data_hash: self.data_hash,
+			last_results_hash: self.last_results_hash,
+			evidence_hash: self.evidence_hash,
+		}
+	}
 }
 
 impl AppHash {
@@ -132,6 +183,10 @@ impl<T> BlockData<T> {
 
 	pub fn get(&self) -> &[NonEmptyBz<T>] {
 		&self.0
+	}
+
+	pub fn into_inner(self) -> Vec<NonEmptyBz<T>> {
+		self.0
 	}
 }
 

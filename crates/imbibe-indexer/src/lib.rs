@@ -96,7 +96,7 @@ where
 fn make_header(tm_header: TendermintBlockHeader) -> Result<Header> {
 	let header = Header::builder()
 		.chain_id(tm_header.chain_id.into())
-		.height(tm_header.height.value())
+		.height(tm_header.height.value().try_into().map_err(|_| IndexerError::Height)?)
 		.time(Timestamp::from_nanosecond(
 			tm_header.time.unix_timestamp_nanos(),
 		)?)

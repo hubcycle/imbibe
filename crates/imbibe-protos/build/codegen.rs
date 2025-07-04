@@ -127,14 +127,12 @@ where
 
 			if !parts.is_empty() {
 				println!(
-					"processing for mod.rs: file='{}', package_parts='{:?}'",
-					original_file_name, parts,
+					"processing for mod.rs: file='{original_file_name}', package_parts='{parts:?}'",
 				);
 				insert_into_tree(&mut root_module_node, &parts, original_file_name.into());
 			} else {
 				println!(
-					"cargo:warning=skipping file for mod.rs (no package parts derived): '{}'",
-					original_file_name,
+					"cargo:warning=skipping file for mod.rs (no package parts derived): '{original_file_name}'",
 				);
 			}
 		}
@@ -242,14 +240,14 @@ fn write_tree_to_mod_rs_recursive(
 		current_path_segments.push(mod_segment_name.clone());
 		let rust_mod_name = mod_segment_name.to_lowercase();
 
-		writeln!(writer, "{}pub mod {} {{", indent, rust_mod_name)?;
+		writeln!(writer, "{indent}pub mod {rust_mod_name} {{")?;
 
 		match node_data.src_file_name.as_ref() {
 			Some(src_file_name) => {
 				let indent = format!("{indent}\t");
-				writeln!(writer, "{}#[allow(unused_imports)]", indent)?;
-				writeln!(writer, "{}use crate::GetSigners;\n", indent)?;
-				writeln!(writer, "{}include!(\"{}\");", indent, src_file_name)?;
+				writeln!(writer, "{indent}#[allow(unused_imports)]")?;
+				writeln!(writer, "{indent}use crate::GetSigners;\n")?;
+				writeln!(writer, "{indent}include!(\"{src_file_name}\");")?;
 			},
 			None => {
 				println!(
@@ -273,7 +271,7 @@ fn write_tree_to_mod_rs_recursive(
 			)?;
 		}
 
-		writeln!(writer, "{}}}\n", indent)?; // Close the current module block
+		writeln!(writer, "{indent}}}\n",)?; // Close the current module block
 		current_path_segments.pop();
 	}
 

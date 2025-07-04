@@ -1,4 +1,5 @@
 pub mod block;
+pub mod summary;
 pub mod tx;
 
 use core::fmt::{Debug, Formatter, Result};
@@ -29,6 +30,10 @@ impl Sha256 {
 
 	pub const fn get(&self) -> &[u8; Self::LEN] {
 		&self.0
+	}
+
+	pub const fn into_inner(self) -> [u8; Self::LEN] {
+		self.0
 	}
 }
 

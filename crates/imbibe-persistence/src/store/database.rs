@@ -1,7 +1,13 @@
-use core::num::NonZeroU64;
+use core::{
+	num::NonZeroU64,
+	ops::{Bound, RangeBounds},
+};
+
+use std::sync::LazyLock;
 
 use diesel::{
-	ExpressionMethods, JoinOnDsl, QueryDsl, dsl,
+	ExpressionMethods, JoinOnDsl, OptionalExtension, QueryDsl, dsl,
+	expression::SqlLiteral,
 	prelude::QueryableByName,
 	sql_types::{Array, BigInt, Bytea},
 };
@@ -10,6 +16,7 @@ use futures::{Stream, StreamExt, TryStreamExt};
 use imbibe_domain::{
 	Sha256,
 	block::Block,
+	summary::{FeeSummary, TxSummary},
 	tx::{Fees, Tx},
 };
 
@@ -18,14 +25,20 @@ use crate::{
 	record::{
 		insert::{NewBlockRecord, NewFeeRecord, NewMsgRecord, NewSignatureRecord, NewTxRecord},
 		select::{
-			BlockWithDataRecord, FeeRecord, MsgRecord, SignatureRecord, TxRecord,
-			TxWithDetailsRecord,
+			BlockWithDataRecord, FeeRecord, FeeSummaryRecord, MsgRecord, SignatureRecord, TxRecord,
+			TxSummaryRecord, TxWithDetailsRecord,
 		},
 	},
 	schema,
 };
 
 use super::{InvalidValueError, StoreError};
+
+static TX_BZ_ARRAY_AGG: LazyLock<SqlLiteral<Array<Bytea>>> = LazyLock::new(|| {
+	dsl::sql::<Array<Bytea>>(
+		"COALESCE(NULLIF(array_agg(tx.tx_bz ORDER BY tx.tx_idx_in_block ASC), '{NULL}'), '{}')",
+	)
+});
 
 #[tracing::instrument(skip_all)]
 pub async fn save_blocks_with_txs<TXS>(
@@ -122,17 +135,23 @@ pub async fn save_block_with_txs(
 	Ok(())
 }
 
-#[tracing::instrument(skip(conn))]
-pub async fn fetch_missing_block_heights(
+#[tracing::instrument(skip_all)]
+pub async fn fetch_missing_block_heights<HR>(
 	conn: &mut DbConn,
-	lo: NonZeroU64,
-	hi: NonZeroU64,
-) -> Result<impl Stream<Item = Result<NonZeroU64, StoreError>>, StoreError> {
+	height_range: HR,
+) -> Result<impl Stream<Item = Result<NonZeroU64, StoreError>> + use<HR>, StoreError>
+where
+	HR: RangeBounds<NonZeroU64>,
+{
 	#[derive(QueryableByName)]
 	struct MissingHeight {
 		#[diesel(sql_type = BigInt)]
 		height: i64,
 	}
+
+	let (lo, hi) = lo_hi_from_bounds(height_range)?;
+
+	tracing::info!("fetching missing blocks from {lo} to {hi}");
 
 	const SQL: &str = r#"
 		SELECT gs.height
@@ -155,25 +174,155 @@ pub async fn fetch_missing_block_heights(
 	Ok(stream)
 }
 
+#[tracing::instrument(skip_all)]
+pub async fn fetch_blocks_in_height_range<HR>(
+	conn: &mut DbConn,
+	height_range: HR,
+) -> Result<impl Stream<Item = Result<Block, StoreError>> + use<HR>, StoreError>
+where
+	HR: RangeBounds<NonZeroU64>,
+{
+	let (lo, hi) = lo_hi_from_bounds(height_range)?;
+
+	tracing::info!("fetching blocks from {lo} to {hi}");
+
+	let stream = schema::block::table
+		.left_join(schema::tx::table.on(schema::tx::block_height.eq(schema::block::height)))
+		.filter(schema::block::height.ge(i64::try_from(lo.get()).map_err(InvalidValueError::from)?))
+		.filter(schema::block::height.le(i64::try_from(hi.get()).map_err(InvalidValueError::from)?))
+		.select((schema::block::all_columns, &*TX_BZ_ARRAY_AGG))
+		.group_by(schema::block::all_columns)
+		.order(schema::block::height.desc())
+		.load_stream::<BlockWithDataRecord>(conn)
+		.await?
+		.map_ok(TryFrom::try_from)
+		.map_err(From::from)
+		.map(|res| res.and_then(|block| block.map_err(From::from)));
+
+	Ok(stream)
+}
+
+#[tracing::instrument(skip(conn))]
+pub async fn fetch_txs_by_height(
+	conn: &mut DbConn,
+	height: NonZeroU64,
+) -> Result<Vec<Tx>, StoreError> {
+	let mut txs = vec![];
+
+	for idx in 0.. {
+		match fetch_tx_by_block_height_and_tx_idx_in_block(conn, height, idx).await? {
+			Some(tx) => txs.push(tx),
+			None => break,
+		}
+	}
+
+	Ok(txs)
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn fetch_tx_summaries(
+	conn: &mut DbConn,
+) -> Result<impl Stream<Item = Result<TxSummary, StoreError>> + use<>, StoreError> {
+	let stream = schema::tx_summary::table
+		.select(schema::tx_summary::all_columns)
+		.order(schema::tx_summary::since_blocks_ago.asc())
+		.load_stream::<TxSummaryRecord>(conn)
+		.await?
+		.map_ok(TryFrom::try_from)
+		.map_ok(|summary| summary.map_err(StoreError::from))
+		.map(|res| res?)
+		.map_err(From::from);
+
+	Ok(stream)
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn fetch_fee_summaries(
+	conn: &mut DbConn,
+) -> Result<impl Stream<Item = Result<FeeSummary, StoreError>> + use<>, StoreError> {
+	let stream = schema::fee_summary::table
+		.select(schema::fee_summary::all_columns)
+		.order(schema::fee_summary::since_blocks_ago.asc())
+		.load_stream::<FeeSummaryRecord>(conn)
+		.await?
+		.map_ok(TryFrom::try_from)
+		.map_ok(|summary| summary.map_err(StoreError::from))
+		.map(|res| res?)
+		.map_err(From::from);
+
+	Ok(stream)
+}
+
+#[tracing::instrument(skip(conn))]
+pub async fn fetch_tx_summary_since_blocks_ago(
+	conn: &mut DbConn,
+	since_blocks_ago: NonZeroU64,
+) -> Result<Option<TxSummary>, StoreError> {
+	let since_blocks_ago =
+		i64::try_from(since_blocks_ago.get()).map_err(InvalidValueError::from)?;
+
+	schema::tx_summary::table
+		.select(schema::tx_summary::all_columns)
+		.filter(schema::tx_summary::since_blocks_ago.eq(since_blocks_ago))
+		.first::<TxSummaryRecord>(conn)
+		.await
+		.optional()?
+		.map(TryFrom::try_from)
+		.transpose()
+		.map_err(From::from)
+}
+
+#[tracing::instrument(skip(conn))]
+pub async fn fetch_fee_summary_since_blocks_ago(
+	conn: &mut DbConn,
+	since_blocks_ago: NonZeroU64,
+) -> Result<Option<FeeSummary>, StoreError> {
+	let since_blocks_ago =
+		i64::try_from(since_blocks_ago.get()).map_err(InvalidValueError::from)?;
+
+	schema::fee_summary::table
+		.select(schema::fee_summary::all_columns)
+		.filter(schema::fee_summary::since_blocks_ago.eq(since_blocks_ago))
+		.first::<FeeSummaryRecord>(conn)
+		.await
+		.optional()?
+		.map(TryFrom::try_from)
+		.transpose()
+		.map_err(From::from)
+}
+
+#[tracing::instrument(skip(conn))]
+pub async fn fetch_latest_block(conn: &mut DbConn) -> Result<Option<Block>, StoreError> {
+	schema::block::table
+		.left_join(schema::tx::table.on(schema::tx::block_height.eq(schema::block::height)))
+		.select((schema::block::all_columns, &*TX_BZ_ARRAY_AGG))
+		.group_by(schema::block::all_columns)
+		.order(schema::block::height.desc())
+		.first::<BlockWithDataRecord>(conn)
+		.await
+		.optional()?
+		.map(TryFrom::try_from)
+		.transpose()
+		.map_err(From::from)
+}
+
 #[tracing::instrument(skip(conn))]
 pub async fn fetch_block_by_height(
 	conn: &mut DbConn,
 	height: NonZeroU64,
-) -> Result<Block, StoreError> {
-	let tx_bz_array_agg = dsl::sql::<Array<Bytea>>(
-		"COALESCE(NULLIF(array_agg(tx.tx_bz ORDER BY tx.tx_idx_in_block ASC), '{NULL}'), '{}')",
-	);
-
+) -> Result<Option<Block>, StoreError> {
 	schema::block::table
 		.left_join(schema::tx::table.on(schema::tx::block_height.eq(schema::block::height)))
 		.filter(
 			schema::block::height.eq(i64::try_from(height.get()).map_err(InvalidValueError::from)?),
 		)
-		.select((schema::block::all_columns, tx_bz_array_agg))
+		.select((schema::block::all_columns, &*TX_BZ_ARRAY_AGG))
 		.group_by(schema::block::all_columns)
 		.first::<BlockWithDataRecord>(conn)
 		.await
-		.map(TryFrom::try_from)?
+		.optional()?
+		.map(TryFrom::try_from)
+		.transpose()
 		.map_err(From::from)
 }
 
@@ -181,19 +330,17 @@ pub async fn fetch_block_by_height(
 pub async fn fetch_block_by_block_hash(
 	conn: &mut DbConn,
 	block_hash: &Sha256,
-) -> Result<Block, StoreError> {
-	let tx_bz_array_agg = dsl::sql::<Array<Bytea>>(
-		"COALESCE(NULLIF(array_agg(tx.tx_bz ORDER BY tx.tx_idx_in_block ASC), '{NULL}'), '{}')",
-	);
-
+) -> Result<Option<Block>, StoreError> {
 	schema::block::table
 		.left_join(schema::tx::table.on(schema::tx::block_height.eq(schema::block::height)))
 		.filter(schema::block::block_hash.eq(block_hash.get()))
-		.select((schema::block::all_columns, tx_bz_array_agg))
+		.select((schema::block::all_columns, &*TX_BZ_ARRAY_AGG))
 		.group_by(schema::block::all_columns)
 		.first::<BlockWithDataRecord>(conn)
 		.await
-		.map(TryFrom::try_from)?
+		.optional()?
+		.map(TryFrom::try_from)
+		.transpose()
 		.map_err(From::from)
 }
 
@@ -202,19 +349,23 @@ pub async fn fetch_tx_by_block_height_and_tx_idx_in_block(
 	conn: &mut DbConn,
 	height: NonZeroU64,
 	tx_idx_in_block: u64,
-) -> Result<Tx, StoreError> {
+) -> Result<Option<Tx>, StoreError> {
 	let height = i64::try_from(height.get()).map_err(InvalidValueError::from)?;
 	let tx_idx_in_block = i64::try_from(tx_idx_in_block).map_err(InvalidValueError::from)?;
 
-	let tx = schema::tx::table
+	let Some(tx) = schema::tx::table
 		.select(schema::tx::all_columns)
 		.filter(schema::tx::block_height.eq(height))
 		.filter(schema::tx::tx_idx_in_block.eq(tx_idx_in_block))
 		.first(conn)
-		.await?;
+		.await
+		.optional()?
+	else {
+		return Ok(None);
+	};
 
 	let signatures = fetch_signatures(conn, height, tx_idx_in_block).await?;
-	let fee = fetch_fee(conn, height, tx_idx_in_block).await?;
+	let fee = fetch_fees(conn, height, tx_idx_in_block).await?;
 	let msgs = fetch_msgs(conn, height, tx_idx_in_block).await?;
 
 	TxWithDetailsRecord::builder()
@@ -224,22 +375,30 @@ pub async fn fetch_tx_by_block_height_and_tx_idx_in_block(
 		.fees(fee.iter().map(TryFrom::try_from).collect::<Result<_, _>>()?)
 		.build()
 		.try_into()
+		.map(Some)
 		.map_err(From::from)
 }
 
 #[tracing::instrument(skip(conn))]
-pub async fn fetch_tx_by_tx_hash(conn: &mut DbConn, tx_hash: &Sha256) -> Result<Tx, StoreError> {
-	let tx = schema::tx::table
+pub async fn fetch_tx_by_tx_hash(
+	conn: &mut DbConn,
+	tx_hash: &Sha256,
+) -> Result<Option<Tx>, StoreError> {
+	let Some(tx) = schema::tx::table
 		.select(schema::tx::all_columns)
 		.filter(schema::tx::tx_hash.eq(tx_hash.get()))
 		.first::<TxRecord>(conn)
-		.await?;
+		.await
+		.optional()?
+	else {
+		return Ok(None);
+	};
 
 	let height = tx.block_height();
 	let tx_idx_in_block = tx.tx_idx_in_block();
 
 	let signatures = fetch_signatures(conn, height, tx_idx_in_block).await?;
-	let fee = fetch_fee(conn, height, tx_idx_in_block).await?;
+	let fee = fetch_fees(conn, height, tx_idx_in_block).await?;
 	let msgs = fetch_msgs(conn, height, tx_idx_in_block).await?;
 
 	TxWithDetailsRecord::builder()
@@ -249,6 +408,7 @@ pub async fn fetch_tx_by_tx_hash(conn: &mut DbConn, tx_hash: &Sha256) -> Result<
 		.fees(fee.iter().map(TryFrom::try_from).collect::<Result<_, _>>()?)
 		.build()
 		.try_into()
+		.map(Some)
 		.map_err(From::from)
 }
 
@@ -318,7 +478,7 @@ async fn fetch_signatures(
 		.await
 }
 
-async fn fetch_fee(
+async fn fetch_fees(
 	conn: &mut DbConn,
 	height: i64,
 	tx_idx_in_block: i64,
@@ -344,4 +504,25 @@ async fn fetch_msgs(
 		.order(schema::msg::msg_idx_in_tx.asc())
 		.load(conn)
 		.await
+}
+
+fn lo_hi_from_bounds<RB>(bounds: RB) -> Result<(NonZeroU64, NonZeroU64), StoreError>
+where
+	RB: RangeBounds<NonZeroU64>,
+{
+	let lo = match bounds.start_bound() {
+		Bound::Included(included) => *included,
+		Bound::Excluded(excluded) => excluded.checked_add(1).ok_or(StoreError::Arithmetic)?,
+		Bound::Unbounded => NonZeroU64::MIN,
+	};
+
+	let hi = match bounds.end_bound() {
+		Bound::Included(included) => *included,
+		Bound::Excluded(excluded) => {
+			NonZeroU64::new(excluded.get() - 1).ok_or(StoreError::Arithmetic)?
+		},
+		Bound::Unbounded => NonZeroU64::MIN,
+	};
+
+	Ok((lo, hi))
 }

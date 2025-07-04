@@ -3,7 +3,7 @@ use std::{collections::HashSet, env, path::PathBuf, sync::LazyLock};
 pub static OUT_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
 	const OUT_DIR_ENV_VAR: &str = "OUT_DIR";
 	env::var(OUT_DIR_ENV_VAR)
-		.inspect_err(|e| eprintln!("env var '{OUT_DIR_ENV_VAR}' must be set: {}", e))
+		.inspect_err(|e| eprintln!("env var '{OUT_DIR_ENV_VAR}' must be set: {e}"))
 		.unwrap()
 		.into()
 });
@@ -12,7 +12,7 @@ pub static OUT_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
 pub static PROTO_SRC_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
 	const PROTO_SRC_DIR_ENV_VAR: &str = "PROTO_SRC_DIR";
 	env::var(PROTO_SRC_DIR_ENV_VAR)
-		.inspect_err(|e| eprintln!("env var '{PROTO_SRC_DIR_ENV_VAR}' must be set: {}", e))
+		.inspect_err(|e| eprintln!("env var '{PROTO_SRC_DIR_ENV_VAR}' must be set: {e}"))
 		.unwrap()
 		.into()
 });

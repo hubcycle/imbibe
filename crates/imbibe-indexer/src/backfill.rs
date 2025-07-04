@@ -1,4 +1,7 @@
-use core::num::{NonZeroU64, NonZeroUsize};
+use core::{
+	num::{NonZeroU64, NonZeroUsize},
+	ops::Bound,
+};
 
 use cosmrs::tendermint::block::Height;
 use futures::{StreamExt, TryStreamExt};
@@ -40,9 +43,11 @@ impl BackfillIndexer {
 impl BackfillIndexer {
 	#[tracing::instrument(skip_all)]
 	pub async fn start(self) -> Result<()> {
-		tracing::info!("backfilling blocks from {} upto {}", self.lo, self.hi);
+		let Self { lo, hi, .. } = &self;
+		tracing::info!("backfilling blocks from {lo} upto {hi}",);
 
-		store::fetch_missing_block_heights(&mut self.pool.get().await?, self.lo, self.hi)
+		let height_range = (Bound::Included(lo), Bound::Included(hi));
+		store::fetch_missing_block_heights(&mut self.pool.get().await?, height_range)
 			.await?
 			.inspect_ok(|h| tracing::info!("backfilling block {h}"))
 			.inspect_err(|e| tracing::error!("store error: {e}"))
@@ -63,18 +68,15 @@ impl BackfillIndexer {
 				super::process_block(header, hash, data, exec_tx_results)
 			})
 			.try_chunks(self.batch.get())
-			.map_err(|e| IndexerError::Other(e.into()))
-			.and_then(async |blocks| Ok((self.pool.get().await?, blocks)))
+			.map_err(From::from)
+			.map_err(IndexerError::Other)
+			.and_then(async |blocks_with_txs| Ok((self.pool.get().await?, blocks_with_txs)))
 			.try_for_each_concurrent(self.workers.get(), async |(mut conn, tbrs)| {
 				store::save_blocks_with_txs(&mut conn, &tbrs).await.map_err(From::from)
 			})
 			.await?;
 
-		tracing::info!(
-			"finished backfilling blocks from {} upto {}",
-			self.lo,
-			self.hi
-		);
+		tracing::info!("finished backfilling blocks from {lo} upto {hi}");
 
 		Ok(())
 	}

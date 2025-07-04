@@ -4,14 +4,16 @@ use imbibe_indexer::{BackfillIndexer, LiveIndexer, WebSocketClient};
 use imbibe_persistence::pool::DbPool;
 use tokio::sync::oneshot;
 
-pub async fn run<U>(
+pub async fn run<U, W>(
 	url: U,
 	pool: DbPool,
 	batch: NonZeroUsize,
 	workers: NonZeroUsize,
+	windows: W,
 ) -> anyhow::Result<()>
 where
 	U: AsRef<str>,
+	W: Iterator<Item = NonZeroU64>,
 {
 	let (client, driver) = WebSocketClient::new(url.as_ref()).await?;
 	let driver_handle = tokio::spawn(driver.run());
@@ -21,6 +23,7 @@ where
 	let live_indexer = LiveIndexer::builder()
 		.pool(pool.clone())
 		.client(client.clone())
+		.windows(windows)
 		.first_block_transmitter(tx)
 		.build();
 
@@ -40,7 +43,8 @@ where
 			.lo(NonZeroU64::MIN)
 			.hi(hi)
 			.build()
-			.map(|indexer| tokio::spawn(indexer.start()))?
+			.map(BackfillIndexer::start)
+			.map(tokio::spawn)?
 			.await??;
 	}
 

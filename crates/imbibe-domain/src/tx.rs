@@ -64,7 +64,28 @@ pub struct Fees(Vec<Coin>);
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Msgs(Vec<Any>);
 
-impl Tx {
+pub struct TxDissolved<DBZ, TBZ> {
+	pub block_height: NonZeroU64,
+	pub tx_idx_in_block: u64,
+	pub tx_hash: Sha256,
+	pub msgs: Msgs,
+	pub memo: Option<Memo>,
+	pub timeout_height: Option<NonZeroU64>,
+	pub signatures: Vec<SignatureBytes>,
+	pub signers: Vec<SignerPublicKey>,
+	pub fees: Option<Fees>,
+	pub payer: Address,
+	pub granter: Option<Address>,
+	pub code: Code,
+	pub codespace: Option<Codespace>,
+	pub gas_limit: u64,
+	pub gas_wanted: u64,
+	pub gas_used: u64,
+	pub data_bz: Option<NonEmptyBz<DBZ>>,
+	pub tx_bz: NonEmptyBz<TBZ>,
+}
+
+impl<DBZ, TBZ> Tx<DBZ, TBZ> {
 	pub fn block_height(&self) -> NonZeroU64 {
 		self.block_height
 	}
@@ -129,12 +150,35 @@ impl Tx {
 		self.gas_used
 	}
 
-	pub fn data_bz(&self) -> Option<&NonEmptyBz<Bytes>> {
+	pub fn data_bz(&self) -> Option<&NonEmptyBz<DBZ>> {
 		self.data_bz.as_ref()
 	}
 
-	pub fn tx_bz(&self) -> &NonEmptyBz<Bytes> {
+	pub fn tx_bz(&self) -> &NonEmptyBz<TBZ> {
 		&self.tx_bz
+	}
+
+	pub fn dissolve(self) -> TxDissolved<DBZ, TBZ> {
+		TxDissolved {
+			block_height: self.block_height,
+			tx_idx_in_block: self.tx_idx_in_block,
+			tx_hash: self.tx_hash,
+			msgs: self.msgs,
+			memo: self.memo,
+			timeout_height: self.timeout_height,
+			signatures: self.signatures,
+			signers: self.signers,
+			fees: self.fees,
+			payer: self.payer,
+			granter: self.granter,
+			code: self.code,
+			codespace: self.codespace,
+			gas_limit: self.gas_limit,
+			gas_wanted: self.gas_wanted,
+			gas_used: self.gas_used,
+			data_bz: self.data_bz,
+			tx_bz: self.tx_bz,
+		}
 	}
 }
 
@@ -142,11 +186,27 @@ impl Memo {
 	pub fn new(memo: String) -> Option<Self> {
 		(!memo.is_empty()).then_some(memo).map(Self)
 	}
+
+	pub fn get(&self) -> &str {
+		&self.0
+	}
+
+	pub fn into_inner(self) -> String {
+		self.0
+	}
 }
 
 impl Codespace {
 	pub fn new(memo: String) -> Option<Self> {
 		(!memo.is_empty()).then_some(memo).map(Self)
+	}
+
+	pub fn get(&self) -> &str {
+		&self.0
+	}
+
+	pub fn into_inner(self) -> String {
+		self.0
 	}
 }
 
@@ -158,6 +218,10 @@ impl Fees {
 	pub fn get(&self) -> &[Coin] {
 		&self.0
 	}
+
+	pub fn into_inner(self) -> Vec<Coin> {
+		self.0
+	}
 }
 
 impl Msgs {
@@ -167,6 +231,10 @@ impl Msgs {
 
 	pub fn get(&self) -> &[Any] {
 		&self.0
+	}
+
+	pub fn into_inner(self) -> Vec<Any> {
+		self.0
 	}
 }
 
@@ -228,7 +296,5 @@ where
 		.into_iter()
 		.map(TryFrom::try_from)
 		.collect::<Result<_, _>>()
-		.map_err(|e| {
-			de::Error::custom(format!("failed to convert Any to SignerPublicKey: {:?}", e))
-		})
+		.map_err(|e| de::Error::custom(format!("failed to convert Any to SignerPublicKey: {e:?}")))
 }

@@ -24,6 +24,7 @@ async fn main() -> anyhow::Result<()> {
 			pool.clone(),
 			config.indexer.batch,
 			config.indexer.workers,
+			config.indexer.windows.into_iter(),
 		);
 
 		tokio::spawn(indexer)
@@ -31,9 +32,16 @@ async fn main() -> anyhow::Result<()> {
 
 	#[cfg(feature = "tarpc-querier")]
 	let tarpc_querier_handle = {
-		let tarpc_querier = imbibe::tarpc_querier::run(pool, config.querier.listen);
+		let tarpc_querier = imbibe::tarpc_querier::run(pool.clone(), config.querier.tarpc);
 
 		tokio::spawn(tarpc_querier)
+	};
+
+	#[cfg(feature = "graphql-querier")]
+	let graphql_querier_handle = {
+		let graphql_querier = imbibe::graphql_querier::run(pool, config.querier.graphql);
+
+		tokio::spawn(graphql_querier)
 	};
 
 	#[cfg(feature = "indexer")]
@@ -41,6 +49,9 @@ async fn main() -> anyhow::Result<()> {
 
 	#[cfg(feature = "tarpc-querier")]
 	tarpc_querier_handle.await??;
+
+	#[cfg(feature = "graphql-querier")]
+	graphql_querier_handle.await??;
 
 	Ok(())
 }

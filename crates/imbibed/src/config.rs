@@ -36,12 +36,14 @@ pub struct IndexerConfig {
 	pub tm_ws_url: String,
 	pub batch: core::num::NonZeroUsize,
 	pub workers: core::num::NonZeroUsize,
+	pub windows: Vec<core::num::NonZeroU64>,
 }
 
 #[cfg(feature = "querier")]
 #[derive(Deserialize)]
 pub struct QuerierConfig {
-	pub listen: String,
+	pub graphql: String,
+	pub tarpc: String,
 }
 
 #[cfg(not(feature = "disable-telemetry"))]

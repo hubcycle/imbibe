@@ -9,6 +9,7 @@ use diesel::prelude::Queryable;
 use imbibe_domain::{
 	Address, NonEmptyBz, Sha256,
 	block::{AppHash, Block, BlockData, Header},
+	summary::{FeeSummary, TxSummary},
 	tx::{Codespace, Fees, Memo, Tx},
 };
 use serde_json::Value;
@@ -67,6 +68,28 @@ pub struct TxRecord {
 }
 
 #[derive(Debug, Queryable)]
+pub struct TxSummaryRecord {
+	since_blocks_ago: i64,
+	start_block_height: i64,
+	total_gas_used: i64,
+	total_txs: i64,
+	total_msgs: i64,
+	total_signatures: i64,
+	created_at: Option<DateTime<Utc>>,
+	updated_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Queryable)]
+pub struct FeeSummaryRecord {
+	since_blocks_ago: i64,
+	start_block_height: i64,
+	denom: String,
+	total_amount: BigDecimal,
+	created_at: Option<DateTime<Utc>>,
+	updated_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Queryable)]
 pub struct SignatureRecord {
 	bz: Vec<u8>,
 }
@@ -107,7 +130,7 @@ impl TryFrom<BlockWithDataRecord> for Block {
 
 		let header = Header::builder()
 			.chain_id(block_record.chain_id)
-			.height(block_record.height.try_into()?)
+			.height(u64::try_from(block_record.height)?.try_into()?)
 			.time(super::chrono_to_jiff(&block_record.time))
 			.validators_hash(Sha256::new(
 				block_record.validators_hash.as_slice().try_into()?,
@@ -207,6 +230,43 @@ impl TryFrom<TxWithDetailsRecord> for Tx {
 			.build();
 
 		Ok(tx)
+	}
+}
+
+impl TryFrom<TxSummaryRecord> for TxSummary {
+	type Error = InvalidValueError;
+
+	fn try_from(record: TxSummaryRecord) -> Result<Self, Self::Error> {
+		let tx_summary = Self::builder()
+			.since_blocks_ago(u64::try_from(record.since_blocks_ago)?.try_into()?)
+			.start_block_height(u64::try_from(record.start_block_height)?.try_into()?)
+			.total_txs(record.total_txs.try_into()?)
+			.total_gas_used(record.total_gas_used.try_into()?)
+			.total_msgs(record.total_msgs.try_into()?)
+			.total_signatures(record.total_signatures.try_into()?)
+			.build();
+
+		Ok(tx_summary)
+	}
+}
+
+impl TryFrom<FeeSummaryRecord> for FeeSummary {
+	type Error = InvalidValueError;
+
+	fn try_from(record: FeeSummaryRecord) -> Result<Self, Self::Error> {
+		let total_fees = record
+			.total_amount
+			.to_u128()
+			.ok_or(InvalidValueError::AmountError)
+			.and_then(|amount| Coin::new(amount, &record.denom).map_err(From::from))?;
+
+		let fee_summary = Self::builder()
+			.since_blocks_ago(u64::try_from(record.since_blocks_ago)?.try_into()?)
+			.start_block_height(u64::try_from(record.start_block_height)?.try_into()?)
+			.total_fees(total_fees)
+			.build();
+
+		Ok(fee_summary)
 	}
 }
 

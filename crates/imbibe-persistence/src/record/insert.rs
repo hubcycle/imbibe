@@ -90,7 +90,7 @@ impl<'a> TryFrom<&'a Block> for NewBlockRecord<'a> {
 
 	fn try_from(block: &'a Block) -> Result<Self, Self::Error> {
 		let record = Self::builder()
-			.height(block.header().height().try_into()?)
+			.height(block.header().height().get().try_into()?)
 			.block_hash(block.hash().get())
 			.chain_id(block.header().chain_id())
 			.time(super::jiff_to_chrono(block.header().time()).ok_or(InvalidValueError::Time)?)
@@ -113,25 +113,23 @@ impl<'a> TryFrom<&'a Block> for NewBlockRecord<'a> {
 impl<'a> TryFrom<&'a Tx> for NewTxRecord<'a> {
 	type Error = InvalidValueError;
 
-	fn try_from(tx_result: &'a Tx) -> Result<Self, Self::Error> {
+	fn try_from(tx: &'a Tx) -> Result<Self, Self::Error> {
 		let tx_record = NewTxRecord::builder()
-			.block_height(tx_result.block_height().get().try_into()?)
-			.tx_idx_in_block(tx_result.tx_idx_in_block().try_into()?)
-			.tx_hash(tx_result.tx_hash().get().as_slice())
-			.maybe_memo(tx_result.memo().map(AsRef::as_ref))
-			.maybe_timeout_height(
-				tx_result.timeout_height().map(|th| th.get().try_into()).transpose()?,
-			)
-			.signers(signer_keys_to_json(tx_result.signers().iter().cloned())?)
-			.payer(tx_result.payer().as_bytes())
-			.maybe_granter(tx_result.granter().map(Address::as_bytes))
-			.gas_limit(tx_result.gas_limit().try_into()?)
-			.gas_wanted(tx_result.gas_wanted().try_into()?)
-			.gas_used(tx_result.gas_used().try_into()?)
-			.code(tx_result.code().value().try_into()?)
-			.maybe_codespace(tx_result.codespace().map(AsRef::as_ref))
-			.maybe_data_bz(tx_result.data_bz().map(AsRef::as_ref))
-			.tx_bz(tx_result.tx_bz().get())
+			.block_height(tx.block_height().get().try_into()?)
+			.tx_idx_in_block(tx.tx_idx_in_block().try_into()?)
+			.tx_hash(tx.tx_hash().get().as_slice())
+			.maybe_memo(tx.memo().map(AsRef::as_ref))
+			.maybe_timeout_height(tx.timeout_height().map(|th| th.get().try_into()).transpose()?)
+			.signers(signer_keys_to_json(tx.signers().iter().cloned())?)
+			.payer(tx.payer().as_bytes())
+			.maybe_granter(tx.granter().map(Address::as_bytes))
+			.gas_limit(tx.gas_limit().try_into()?)
+			.gas_wanted(tx.gas_wanted().try_into()?)
+			.gas_used(tx.gas_used().try_into()?)
+			.code(tx.code().value().try_into()?)
+			.maybe_codespace(tx.codespace().map(AsRef::as_ref))
+			.maybe_data_bz(tx.data_bz().map(AsRef::as_ref))
+			.tx_bz(tx.tx_bz().get())
 			.build();
 
 		Ok(tx_record)

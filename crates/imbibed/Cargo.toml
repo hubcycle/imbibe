@@ -12,7 +12,7 @@ publish.workspace = true
 workspace = true
 
 [features]
-default = []
+default = ["indexer", "graphql-querier"]
 bundled = ["imbibe-persistence/bundled"]
 custom-protos = ["imbibe-indexer/custom-protos"]
 disable-telemetry = ["disable-tracing"]
@@ -21,6 +21,13 @@ disable-tracing = [
   "tracing/release_max_level_off",
 ]
 ethsecp256k1 = ["imbibe-indexer/ethsecp256k1"]
+graphql-querier = [
+  "dep:async-graphql",
+  "dep:async-graphql-axum",
+  "dep:axum",
+  "imbibe-querier/graphql",
+  "querier",
+]
 indexer = [
   "dep:imbibe-indexer",
   "persistence",
@@ -39,6 +46,9 @@ tarpc-querier = [
 
 [dependencies]
 anyhow = "1"
+async-graphql = { workspace = true, optional = true }
+async-graphql-axum = { workspace = true, optional = true }
+axum = { version = "0.7", optional = true }
 config = { version = "0.15", default-features = false, features = ["ron"] }
 futures = { workspace = true, optional = true }
 imbibe-indexer = { workspace = true, optional = true }
