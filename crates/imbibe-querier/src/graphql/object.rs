@@ -69,6 +69,7 @@ pub struct TxGql {
 pub struct TxSummaryGql {
 	since_blocks_ago: NonZeroU64,
 	start_block_height: NonZeroU64,
+	total_txs: u64,
 	total_gas_used: u64,
 	total_msgs: u64,
 	total_signatures: u64,
@@ -170,6 +171,7 @@ impl From<TxSummary> for TxSummaryGql {
 		Self {
 			since_blocks_ago: summary.since_blocks_ago,
 			start_block_height: summary.start_block_height,
+			total_txs: summary.total_txs,
 			total_gas_used: summary.total_gas_used,
 			total_msgs: summary.total_msgs,
 			total_signatures: summary.total_signatures,
