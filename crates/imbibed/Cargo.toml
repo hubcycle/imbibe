@@ -25,6 +25,7 @@ graphql-querier = [
   "dep:async-graphql",
   "dep:async-graphql-axum",
   "dep:axum",
+  "dep:tower-http",
   "imbibe-querier/graphql",
   "querier",
 ]
@@ -58,5 +59,6 @@ imbibe-telemetry = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 tarpc = { workspace = true, optional = true, features = ["serde-transport-json", "tcp"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tower-http = { version = "0.6", optional = true, features = ["cors"] }
 tracing = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

@@ -4,6 +4,7 @@ use axum::{Router, response::Html, routing};
 use imbibe_persistence::pool::DbPool;
 use imbibe_querier::{graphql::QueryRoot, server::Querier};
 use tokio::net::{TcpListener, ToSocketAddrs};
+use tower_http::cors::{Any, CorsLayer};
 
 pub async fn run<A>(pool: DbPool, sock_addr: A) -> anyhow::Result<()>
 where
@@ -13,10 +14,12 @@ where
 
 	let schema = Schema::build(query_root, EmptyMutation, EmptySubscription).finish();
 
-	let app = Router::new().route(
-		"/",
-		routing::get(graphiql).post_service(GraphQL::new(schema)),
-	);
+	let app = Router::new()
+		.route(
+			"/",
+			routing::get(graphiql).post_service(GraphQL::new(schema)),
+		)
+		.layer(CorsLayer::new().allow_origin(Any).allow_methods(Any).allow_headers(Any));
 
 	let listener = TcpListener::bind(sock_addr).await?;
 
