@@ -71,12 +71,12 @@ impl BackfillIndexer {
 			.map_err(From::from)
 			.map_err(IndexerError::Other)
 			.and_then(async |blocks_with_txs| Ok((self.pool.get().await?, blocks_with_txs)))
-			.try_for_each_concurrent(self.workers.get(), async |(mut conn, tbrs)| {
-				let _ = store::save_blocks_with_txs(&mut conn, &tbrs).await;
-
-				Ok(())
+			.for_each_concurrent(self.workers.get(), async |a| {
+				if let Ok((mut conn, tbrs)) = a {
+					let _ = store::save_blocks_with_txs(&mut conn, &tbrs).await;
+				}
 			})
-			.await?;
+			.await;
 
 		tracing::info!("finished backfilling blocks from {lo} upto {hi}");
 
