@@ -72,7 +72,9 @@ impl BackfillIndexer {
 			.map_err(IndexerError::Other)
 			.and_then(async |blocks_with_txs| Ok((self.pool.get().await?, blocks_with_txs)))
 			.try_for_each_concurrent(self.workers.get(), async |(mut conn, tbrs)| {
-				store::save_blocks_with_txs(&mut conn, &tbrs).await.map_err(From::from)
+				let _ = store::save_blocks_with_txs(&mut conn, &tbrs).await;
+
+				Ok(())
 			})
 			.await?;
 
